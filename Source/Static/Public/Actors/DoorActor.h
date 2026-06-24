@@ -7,32 +7,30 @@
 
 class UStaticMeshComponent;
 class UBoxComponent;
+class ADeadCharacter;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ADoorActor
 //
-//   A server-authoritative door that Living players can open and close.
-//   The Dead can also move through walls, but open doors still matter for
-//   light and line-of-sight, so this is a key environmental element.
+//   A replicated door that behaves differently for Living and Dead:
 //
-//   HOW IT WORKS:
-//   Interact() toggles bIsOpen. The replicated flag triggers OnRep_IsOpen
-//   on all clients, which plays a timeline animation via Blueprint or rotates
-//   the mesh directly in C++ using a timer-driven lerp.
+//   LIVING → Interact() opens or closes the door normally.
+//
+//   DEAD   → Interact() calls PassThrough() instead.
+//            The door stays closed. The Dead's capsule collision is disabled
+//            for PassThroughDuration seconds, the character is pushed forward
+//            through the door with an impulse, then collision re-enables.
+//            This costs PassThroughEnergyCost specter energy.
+//
+//   The Living see the door stay closed — from their perspective, the Dead
+//   simply appeared on the other side. The Dead feel a brief 0.5s transit.
 //
 //   EDITOR SETUP:
 //   1. Create BP_Door from this class.
-//   2. Assign a door mesh (just the moving panel — frame is a separate static mesh).
-//   3. Set OpenRotation to the angle the door swings to (e.g. Y = 90 degrees).
-//   4. Set OpenSpeed to control how fast it swings (degrees per second).
-//   5. Place BP_Door actors throughout the mansion.
-//
-//   ANIMATION NOTE:
-//   We drive the rotation in Tick using a lerp rather than a UTimelineComponent
-//   because timelines don't replicate well. The mesh rotation is driven by
-//   bIsOpen (replicated) on every client independently. This is the standard
-//   UE5 approach for replicated doors — clients simulate the animation locally
-//   based on the authoritative open/close state.
+//   2. Assign a door panel mesh to DoorMesh.
+//   3. Set OpenRotation (e.g. Yaw = 90) for swing direction.
+//   4. The door frame should be a separate static mesh actor — not part of this BP.
+//   5. Set PassThroughEnergyCost to match your energy economy (default 12).
 // ─────────────────────────────────────────────────────────────────────────────
 UCLASS()
 class STATIC_API ADoorActor : public AActor, public IInteractable
@@ -54,29 +52,57 @@ public:
     virtual FText GetInteractPrompt_Implementation() const override;
     virtual bool CanInteract_Implementation(AActor* Interactor) const override;
 
-    // ── State ─────────────────────────────────────────────────────────────────
+    // ── Living door control ───────────────────────────────────────────────────
 
     UFUNCTION(BlueprintPure, Category = "Door")
     bool IsOpen() const { return bIsOpen; }
 
-    /** Force open or close from external logic (e.g. a puzzle trigger). */
     UFUNCTION(BlueprintCallable, Category = "Door")
     void SetOpen(bool bOpen);
 
+    // ── Dead pass-through ─────────────────────────────────────────────────────
+
+    /**
+     * Called when a Dead character interacts with the door.
+     * Checks energy cost, disables capsule, pushes through, re-enables.
+     * SERVER ONLY.
+     */
+    UFUNCTION(BlueprintCallable, Category = "Door|PassThrough")
+    void PassThrough(ADeadCharacter* Dead);
+
     // ── Configuration ─────────────────────────────────────────────────────────
 
-    /** Rotation of the door mesh when fully open. Closed = FRotator::ZeroRotator. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door")
     FRotator OpenRotation = FRotator(0.0f, 90.0f, 0.0f);
 
-    /** Degrees per second the door swings. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door",
         meta = (ClampMin = "10.0"))
     float OpenSpeed = 180.0f;
 
-    /** If true, the door cannot be interacted with (locked). */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door", Replicated)
     bool bIsLocked = false;
+
+    /** Energy cost for the Dead to pass through this door. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door|PassThrough",
+        meta = (ClampMin = "0.0"))
+    float PassThroughEnergyCost = 12.0f;
+
+    /**
+     * How long (seconds) the Dead's capsule stays passable during transit.
+     * 0.5s gives a brief ghostly slip-through feel.
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door|PassThrough",
+        meta = (ClampMin = "0.1"))
+    float PassThroughDuration = 0.5f;
+
+    /**
+     * Forward impulse applied to push the Dead through the door (cm/s).
+     * Should be enough to cross a standard door thickness (~20cm) in
+     * PassThroughDuration seconds.
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door|PassThrough",
+        meta = (ClampMin = "50.0"))
+    float PassThroughImpulse = 300.0f;
 
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Door|Components")
@@ -86,14 +112,27 @@ protected:
     UBoxComponent* InteractionVolume;
 
 private:
+    // ── Door animation state ──────────────────────────────────────────────────
+
     UPROPERTY(ReplicatedUsing = OnRep_IsOpen)
     bool bIsOpen = false;
 
     UFUNCTION()
     void OnRep_IsOpen();
 
-    // Current and target rotations for the lerp animation (local to each client).
-    FRotator CurrentMeshRotation  = FRotator::ZeroRotator;
-    FRotator TargetMeshRotation   = FRotator::ZeroRotator;
+    FRotator CurrentMeshRotation = FRotator::ZeroRotator;
+    FRotator TargetMeshRotation  = FRotator::ZeroRotator;
     bool bAnimating = false;
+
+    // ── Pass-through state ────────────────────────────────────────────────────
+
+    /** Multicast to all clients to play the ghostly transit VFX. */
+    UFUNCTION(NetMulticast, Unreliable)
+    void Multicast_PlayPassThroughEffect(ADeadCharacter* Dead);
+    void Multicast_PlayPassThroughEffect_Implementation(ADeadCharacter* Dead);
+
+    /** Re-enable the Dead character's capsule after transit completes. */
+    void FinishPassThrough(ADeadCharacter* Dead);
+
+    FTimerHandle PassThroughTimerHandle;
 };

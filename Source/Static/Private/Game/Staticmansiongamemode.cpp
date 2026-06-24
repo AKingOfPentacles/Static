@@ -12,6 +12,7 @@
 #include "EngineUtils.h"
 #include "Engine/World.h"
 #include "Engine/PlayerStartPIE.h"
+#include "GameFramework/GameSession.h"
 #include "Kismet/GameplayStatics.h"
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -97,29 +98,49 @@ void AStaticMansionGameMode::Tick(float DeltaTime)
 
 void AStaticMansionGameMode::PostLogin(APlayerController* NewPlayer)
 {
-    Super::PostLogin(NewPlayer);
-
+    // We intentionally do NOT call Super::PostLogin here in full.
+    // Super::PostLogin calls RestartPlayer() which would spawn a DefaultPawn
+    // before we get a chance to spawn the correct team pawn.
+    // We manually call only what we need from the Super chain.
+ 
+    // This is the minimum needed from AGameModeBase::PostLogin:
+    // — registers the player in the game session
+    // — calls GameSession->RegisterPlayer
+    // We replicate that here without triggering the pawn spawn.
+    if (GameSession)
+    {
+        FUniqueNetIdRepl UniqueId = FUniqueNetIdRepl();
+        
+        if  (NewPlayer->PlayerState)        
+        {
+            UniqueId = NewPlayer->PlayerState->GetUniqueId();
+        }
+        
+        GameSession->RegisterPlayer(NewPlayer, UniqueId, false);
+        // GameSession->RegisterPlayer(NewPlayer, NewPlayer->PlayerState
+        //     ? NewPlayer->PlayerState->GetUniqueId().GetUniqueNetId()
+        //     : nullptr, false);
+    }
+ 
+    // Trigger our team assignment and pawn spawn.
     if (!NewPlayer) return;
-
+ 
     const EPlayerTeam Team = AssignTeam(NewPlayer);
     if (Team == EPlayerTeam::Unassigned)
     {
         UE_LOG(LogTemp, Warning,
             TEXT("[GameMode] PostLogin: match is full. Rejecting player."));
-        // In production: kick the player or move them to spectator.
         return;
     }
-
-    // Spawn the correct pawn now. The default pawn was set to nullptr so
-    // Unreal won't auto-spawn anything before we're ready.
+ 
     SpawnPawnForController(NewPlayer, Team);
-
+ 
     UE_LOG(LogTemp, Log, TEXT("[GameMode] Player '%s' joined as %s. Living: %d, Dead: %d"),
         *NewPlayer->GetName(),
         Team == EPlayerTeam::Living ? TEXT("Living") : TEXT("Dead"),
         LivingControllers.Num(),
         DeadControllers.Num());
-
+ 
     CheckAllPlayersReady();
 }
 
@@ -199,8 +220,8 @@ void AStaticMansionGameMode::SpawnPawnForController(
     APlayerController* PC, EPlayerTeam Team)
 {
     UClass* PawnClass = (Team == EPlayerTeam::Living)
-        ? (UClass*)LivingCharacterClass
-        : (UClass*)DeadCharacterClass;
+        ? LivingCharacterClass.Get()
+        : DeadCharacterClass.Get();
 
     if (!PawnClass)
     {

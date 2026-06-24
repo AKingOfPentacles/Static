@@ -21,8 +21,10 @@ void USpecterEnergyComponent::BeginPlay()
 {
     Super::BeginPlay();
 
-    // Dead players start at zero — they must collect Memorabilia in Phase 1.
-    CurrentEnergy = 0.0f;
+    // Start with full energy so abilities work immediately in testing.
+    // In the final game, Dead start at 0 and collect Memorabilia in Phase 1.
+    // Change this back to 0.0f when Memorabilia actors are placed in the level.
+    CurrentEnergy = MaxEnergy;
     bInDepletionPenalty = false;
 }
 
@@ -53,7 +55,7 @@ void USpecterEnergyComponent::TickComponent(
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-    if (!GetOwner() || !GetOwner()->HasAuthority()) return;
+    if (!GetOwner() || !GetOwner()->GetWorld() || GetOwner()->GetWorld()->GetNetMode() == NM_Client) return;
 
     // Passive regen only when NOT in depletion penalty.
     // Phase-gating (e.g. "no regen in Phase 1") can be layered here later
@@ -72,12 +74,15 @@ void USpecterEnergyComponent::TickComponent(
 
 bool USpecterEnergyComponent::TrySpendEnergy(float Cost)
 {
-    if (!GetOwner() || !GetOwner()->HasAuthority()) return false;
-    if (Cost <= 0.0f) return true; // Free abilities always succeed.
+    if (!GetOwner() || !GetOwner()->GetWorld() || GetOwner()->GetWorld()->GetNetMode() == NM_Client) return false;
+    if (Cost <= 0.0f) return true;
+
+    UE_LOG(LogTemp, Log, TEXT("[Specter] TrySpendEnergy: Cost=%.1f Have=%.1f Penalty=%d"),
+        Cost, CurrentEnergy, bInDepletionPenalty);
 
     if (CurrentEnergy < Cost)
     {
-        UE_LOG(LogTemp, Log, TEXT("[Specter] Not enough energy. Have: %.1f, Need: %.1f"),
+        UE_LOG(LogTemp, Warning, TEXT("[Specter] Not enough energy! Have: %.1f, Need: %.1f"),
             CurrentEnergy, Cost);
         return false;
     }
@@ -93,7 +98,7 @@ bool USpecterEnergyComponent::TrySpendEnergy(float Cost)
 
 void USpecterEnergyComponent::GainEnergy(float Amount)
 {
-    if (!GetOwner() || !GetOwner()->HasAuthority()) return;
+    if (!GetOwner() || !GetOwner()->GetWorld() || GetOwner()->GetWorld()->GetNetMode() == NM_Client) return;
     if (Amount <= 0.0f) return;
 
     const float Cap = GetCurrentEnergyCap();
@@ -108,7 +113,7 @@ void USpecterEnergyComponent::GainEnergy(float Amount)
 
 void USpecterEnergyComponent::ApplyDefenseHit(float DefenseStrength)
 {
-    if (!GetOwner() || !GetOwner()->HasAuthority()) return;
+    if (!GetOwner() || !GetOwner()->GetWorld() || GetOwner()->GetWorld()->GetNetMode() == NM_Client) return;
     if (bInDepletionPenalty) return; // Already depleted, ignore.
 
     UE_LOG(LogTemp, Log, TEXT("[Specter] Defense hit! Draining %.1f energy."), DefenseStrength);

@@ -55,20 +55,25 @@ public class Static : ModuleRules
             // Needed for NavAgentProps on CharacterMovementComponent.
             "NavigationSystem",
             "AIModule",
+            // ── ALS / Navigation ────────────────────────────────────────────
+            // Needed for ALS animation  
+            "ALS", "EnhancedInput",
+            
+
         });
 
         PrivateDependencyModuleNames.AddRange(new string[]
         {
+            // ── Enhanced Input ─────────────────────────────────────────────
+            // Add this if you switch from Legacy Input to Enhanced Input.
+            "ALSCamera"
             // ── Slate / UMG ────────────────────────────────────────────────
             // Only needed if you build C++ widgets. Blueprint UMG doesn't require this.
             // Add when you build HUD widgets in C++.
             // "Slate",
             // "SlateCore",
             // "UMG",
-
-            // ── Enhanced Input ─────────────────────────────────────────────
-            // Add this if you switch from Legacy Input to Enhanced Input.
-            // "EnhancedInput",
+            
         });
 
         // ── Additional include paths ───────────────────────────────────────

@@ -1,9 +1,9 @@
 ﻿#include "Actors/ChalkCircleWardActor.h"
 #include "Characters/DeadCharacter.h"
 #include "Characters/LivingCharacter.h"
-#include "Components/GhostMovementComponent.h"
 #include "Components/CardiacRhythmComponent.h"
 #include "Components/SpecterEnergyComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Player/LivingPlayerState.h"
 #include "Net/UnrealNetwork.h"
 #include "Engine/World.h"
@@ -113,32 +113,36 @@ void AChalkCircleWardActor::OnZoneTick()
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ApplySlowToDead
-//   Multiplies or restores GhostMovementComponent::MaxFlySpeed.
+//   Modifies MaxWalkSpeed on the standard UCharacterMovementComponent.
+//   We cache the original speed so we can restore it correctly on exit.
 // ─────────────────────────────────────────────────────────────────────────────
 
 void AChalkCircleWardActor::ApplySlowToDead(ADeadCharacter* Dead, bool bSlow)
 {
     if (!Dead) return;
 
-    UGhostMovementComponent* Ghost = Dead->GetGhostMovementComponent();
-    if (!Ghost) return;
+    UCharacterMovementComponent* Movement = Dead->GetCharacterMovement();
+    if (!Movement) return;
 
     if (bSlow)
     {
-        // Store the original speed and apply the slow.
-        // We write directly to MaxFlySpeed — the component's SpectralSpeed
-        // property is the "true" base; we temporarily lower MaxFlySpeed.
-        Ghost->MaxFlySpeed = Ghost->SpectralSpeed * SlowFactor;
-        UE_LOG(LogTemp, Log, TEXT("[ChalkCircle] Dead slowed to %.0f cm/s."),
-            Ghost->MaxFlySpeed);
+        // Store the current speed and apply the slow factor.
+        const float CurrentSpeed = Movement->MaxWalkSpeed;
+        Movement->MaxWalkSpeed = CurrentSpeed * SlowFactor;
+
+        UE_LOG(LogTemp, Log, TEXT("[ChalkCircle] Dead slowed: %.0f -> %.0f cm/s."),
+            CurrentSpeed, Movement->MaxWalkSpeed);
     }
     else
     {
-        // Restore. Use SpectralSpeed or PassThroughSpeed depending on current mode.
-        Ghost->MaxFlySpeed = Ghost->IsPassingThrough()
-            ? Ghost->PassThroughSpeed
-            : Ghost->SpectralSpeed;
-        UE_LOG(LogTemp, Log, TEXT("[ChalkCircle] Dead speed restored."));
+        // Restore to ALS default walk speed.
+        // 375 is ALS's default MaxWalkSpeed — the Dead character should
+        // match whatever you set in BP_DeadCharacter's movement component.
+        // If you change the Dead's walk speed in Blueprint, update this value.
+        Movement->MaxWalkSpeed = 375.0f;
+
+        UE_LOG(LogTemp, Log, TEXT("[ChalkCircle] Dead speed restored to %.0f cm/s."),
+            Movement->MaxWalkSpeed);
     }
 }
 

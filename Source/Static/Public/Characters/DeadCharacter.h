@@ -1,21 +1,20 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
-#include "Systems/GamePhaseManager.h"   // EGamePhase
+#include "Characters/StaticCharacterBase.h"
+#include "InputActionValue.h"
+#include "Systems/GamePhaseManager.h"
 #include "DeadCharacter.generated.h"
 
-// Forward declarations
+struct FInputActionValue;
+class UInputAction;
+class UInputMappingContext;
+class UAlsCameraComponent;
 class USpecterEnergyComponent;
-class UGhostMovementComponent;
-class UCameraComponent;
-class USpringArmComponent;
 class ADeadPlayerState;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // EDeadAbility
-//   Identifies each of the Dead's active abilities.
-//   Used as a key in the energy cost table and in the unlock bitmask.
 // ─────────────────────────────────────────────────────────────────────────────
 UENUM(BlueprintType)
 enum class EDeadAbility : uint8
@@ -24,7 +23,6 @@ enum class EDeadAbility : uint8
     Whisper         UMETA(DisplayName = "Whisper"),       // Bit 0
     Shiver          UMETA(DisplayName = "Shiver"),        // Bit 1
     Spook           UMETA(DisplayName = "Spook"),         // Bit 2
-    PassThrough     UMETA(DisplayName = "Pass Through"),  // Always available
     Manifestation   UMETA(DisplayName = "Manifestation"), // Bit 3 (Phase 2+)
     FullManifest    UMETA(DisplayName = "Full Manifest")  // Bit 4 (Phase 3 only)
 };
@@ -33,92 +31,143 @@ enum class EDeadAbility : uint8
 // ADeadCharacter
 //
 //   The playable pawn for the Dead team.
-//
-//   KEY DIFFERENCES FROM ALivingCharacter:
-//   • Uses UGhostMovementComponent (custom flying + pass-through mode).
-//   • No inventory — abilities are intrinsic, not item-based.
-//   • Abilities are gated by EGamePhase AND SpecterEnergy.
-//   • No physical body visible by default — mesh is hidden unless manifesting.
-//   • Third-person (or overhead) camera rather than first-person.
-//
-//   ABILITY SYSTEM (stub — full implementation in Dead Ability step):
-//   Each ability is a method here that:
-//   1. Checks phase unlock flag.
-//   2. Calls SpecterEnergyComponent::TrySpendEnergy(cost).
-//   3. If both pass, executes the effect via Server RPC.
-//   The actual fear-raising calls on CardiacRhythmComponent live in the
-//   ability execution — the Dead character just initiates and the server applies.
+//   Inherits standard ALS movement from AStaticCharacterBase — walks exactly
+//   like the Living. The ghostly feel comes from:
+//   • Being invisible by default (mesh hidden, only shown when manifesting)
+//   • Passing through doors via ADoorActor::PassThrough()
+//   • Fear abilities (Whisper, Shiver, Spook, Manifestation)
+//   • No inventory — abilities are intrinsic, gated by phase and energy
 //
 //   EDITOR SETUP:
 //   1. Create BP_DeadCharacter from this class.
-//   2. Do NOT add a UCharacterMovementComponent — it's already replaced by
-//      UGhostMovementComponent in the constructor (ObjectInitializer pattern).
-//   3. Add a skeletal mesh for the manifestation state — keep it hidden by
-//      default (set Hidden in Game = true in the mesh component settings).
-//   4. Position the camera above and slightly behind for a "haunting" angle.
-//   5. In Project Settings → Input, add:
-//      Actions : "AbilityWhisper", "AbilityShiver", "AbilitySpook",
-//                "AbilityPassThrough", "AbilityManifest"
-//      Axes    : "MoveForward", "MoveRight", "MoveUp", "LookUp", "LookRight"
-//      (MoveUp lets the specter rise/sink freely in 3D space.)
+//   2. Assign all UInputAction properties in Blueprint defaults.
+//   3. Add Dead input actions to your InputMappingContext asset.
+//   4. Set mesh Hidden in Game = true by default.
+//   5. Set BurialGroundsActor to BP_BurialGrounds in your level.
 // ─────────────────────────────────────────────────────────────────────────────
 UCLASS()
-class STATIC_API ADeadCharacter : public ACharacter
+class STATIC_API ADeadCharacter : public AStaticCharacterBase
 {
     GENERATED_BODY()
 
-public:
-    // ── Constructor — uses ObjectInitializer to swap the movement component ──
-    //   This is the UE5 pattern for replacing a default subobject.
-    //   The movement component MUST be replaced in the constructor.
-    explicit ADeadCharacter(const FObjectInitializer& ObjectInitializer);
+    // ── ALS camera ────────────────────────────────────────────────────────────
+protected:
+    UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Als Character Example")
+    TObjectPtr<UAlsCameraComponent> Camera;
+
+    // ── ALS input actions ─────────────────────────────────────────────────────
+protected:
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Als Character Example",
+        Meta = (DisplayThumbnail = false))
+    TObjectPtr<UInputMappingContext> InputMappingContext;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Als Character Example",
+        Meta = (DisplayThumbnail = false))
+    TObjectPtr<UInputAction> LookMouseAction;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Als Character Example",
+        Meta = (DisplayThumbnail = false))
+    TObjectPtr<UInputAction> LookAction;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Als Character Example",
+        Meta = (DisplayThumbnail = false))
+    TObjectPtr<UInputAction> MoveAction;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Als Character Example",
+        Meta = (DisplayThumbnail = false))
+    TObjectPtr<UInputAction> SprintAction;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Als Character Example",
+        Meta = (DisplayThumbnail = false))
+    TObjectPtr<UInputAction> WalkAction;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Als Character Example",
+        Meta = (DisplayThumbnail = false))
+    TObjectPtr<UInputAction> CrouchAction;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Als Character Example",
+        Meta = (DisplayThumbnail = false))
+    TObjectPtr<UInputAction> SwitchShoulderAction;
+
+    // ── Dead ability input actions ────────────────────────────────────────────
+protected:
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Als Character Example",
+        Meta = (DisplayThumbnail = false))
+    TObjectPtr<UInputAction> AbilityWhisperAction;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Als Character Example",
+        Meta = (DisplayThumbnail = false))
+    TObjectPtr<UInputAction> AbilityShiverAction;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Als Character Example",
+        Meta = (DisplayThumbnail = false))
+    TObjectPtr<UInputAction> AbilitySpookAction;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Als Character Example",
+        Meta = (DisplayThumbnail = false))
+    TObjectPtr<UInputAction> AbilityManifestAction;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Als Character Example",
+        Meta = (DisplayThumbnail = false))
+    TObjectPtr<UInputAction> InteractAction;
+
+    // ── Look sensitivity ──────────────────────────────────────────────────────
+protected:
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings|Als Character Example",
+        Meta = (ClampMin = 0, ForceUnits = "x"))
+    float LookUpMouseSensitivity{1.0f};
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings|Als Character Example",
+        Meta = (ClampMin = 0, ForceUnits = "x"))
+    float LookRightMouseSensitivity{1.0f};
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings|Als Character Example",
+        Meta = (ClampMin = 0, ForceUnits = "deg/s"))
+    float LookUpRate{90.0f};
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings|Als Character Example",
+        Meta = (ClampMin = 0, ForceUnits = "deg/s"))
+    float LookRightRate{240.0f};
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
+public:
+    ADeadCharacter();
+
     virtual void BeginPlay() override;
-    virtual void Tick(float DeltaTime) override;
-    virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
     virtual void GetLifetimeReplicatedProps(
         TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-    // ── Component accessors ───────────────────────────────────────────────────
+    // ── ALS overrides ─────────────────────────────────────────────────────────
+public:
+    virtual void NotifyControllerChanged() override;
+    virtual void DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DisplayInfo,
+        float& Unused, float& VerticalLocation) override;
 
+protected:
+    virtual void CalcCamera(float DeltaTime, FMinimalViewInfo& ViewInfo) override;
+    virtual void SetupPlayerInputComponent(UInputComponent* Input) override;
+
+    // ── Component accessors ───────────────────────────────────────────────────
+public:
     UFUNCTION(BlueprintPure, Category = "Dead")
     USpecterEnergyComponent* GetSpecterEnergyComponent() const { return SpecterEnergyComponent; }
 
-    UFUNCTION(BlueprintPure, Category = "Dead")
-    UGhostMovementComponent* GetGhostMovementComponent() const { return GhostMovementComponent; }
-
-    // ── Ability interface (full implementation in Dead Ability step) ──────────
-
-    /**
-     * Attempt to activate an ability. Checks phase unlock + energy cost.
-     * Returns true if the ability fired successfully.
-     * Server-authoritative: client input calls a Server RPC which calls this.
-     */
+    // ── Ability interface ─────────────────────────────────────────────────────
+public:
     UFUNCTION(BlueprintCallable, Category = "Dead|Abilities")
     bool TryActivateAbility(EDeadAbility Ability);
 
-    /** Is a given ability currently unlocked for this phase? */
     UFUNCTION(BlueprintPure, Category = "Dead|Abilities")
     bool IsAbilityUnlocked(EDeadAbility Ability) const;
 
-    /** Is the specter currently in pass-through mode? */
-    UFUNCTION(BlueprintPure, Category = "Dead|Abilities")
-    bool IsPassingThrough() const;
-
     // ── Phase awareness ───────────────────────────────────────────────────────
-
+public:
     UFUNCTION(BlueprintNativeEvent, Category = "Dead|Phase")
     void OnPhaseChanged(EGamePhase NewPhase, EGamePhase OldPhase);
     virtual void OnPhaseChanged_Implementation(EGamePhase NewPhase, EGamePhase OldPhase);
 
-    // ── Manifestation visibility ──────────────────────────────────────────────
-
-    /**
-     * Show or hide the specter's mesh.
-     * Called by manifestation abilities — not called directly by input.
-     * Replicated via the bIsManifested flag below.
-     */
+    // ── Manifestation ─────────────────────────────────────────────────────────
+public:
     UFUNCTION(BlueprintCallable, Category = "Dead|Manifestation")
     void SetManifested(bool bManifest);
 
@@ -126,21 +175,15 @@ public:
     bool IsManifested() const { return bIsManifested; }
 
     // ── Burial grounds respawn ────────────────────────────────────────────────
-
-    /**
-     * Teleport the specter to the burial grounds spawn point.
-     * Called by SpecterEnergyComponent's OnSpecterDepleted delegate.
-     * The burial grounds actor reference is set in the Blueprint.
-     */
+public:
     UFUNCTION(BlueprintCallable, Category = "Dead|Respawn")
     void RespawnAtBurialGrounds();
 
-    /** Reference to the burial grounds actor. Set this in Blueprint or via editor. */
     UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Dead|Respawn")
     AActor* BurialGroundsActor = nullptr;
 
-    // ── Energy costs (designer-tunable per ability) ───────────────────────────
-
+    // ── Energy costs ──────────────────────────────────────────────────────────
+public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dead|Energy Costs")
     float WhisperEnergyCost = 5.0f;
 
@@ -156,75 +199,54 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dead|Energy Costs")
     float FullManifestEnergyCost = 50.0f;
 
-    /** Energy drained per second while pass-through is held. Forwarded to GhostMovementComponent. */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dead|Energy Costs")
-    float PassThroughCostPerSecond = 8.0f;
-
-protected:
     // ── Components ────────────────────────────────────────────────────────────
-
+protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dead|Components")
     USpecterEnergyComponent* SpecterEnergyComponent;
 
-    /**
-     * The ghost movement component. Declared as UGhostMovementComponent* so
-     * we can call ghost-specific methods without casting every time.
-     * The engine sees it as the standard CharacterMovementComponent slot.
-     */
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dead|Components")
-    UGhostMovementComponent* GhostMovementComponent;
-
-    /** Third-person / overhead camera for the Dead perspective. */
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dead|Components")
-    UCameraComponent* SpectralCamera;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dead|Components")
-    USpringArmComponent* CameraSpringArm;
-
-private:
     // ── Replicated state ──────────────────────────────────────────────────────
-
-    /** Whether the specter's mesh is currently visible to the Living. */
+private:
     UPROPERTY(ReplicatedUsing = OnRep_Manifested)
     bool bIsManifested = false;
 
-    /** Which abilities are currently unlocked (bitmask, mirrors ADeadPlayerState). */
     UPROPERTY(Replicated)
     int32 UnlockedAbilityFlags = 0;
 
     UFUNCTION()
     void OnRep_Manifested();
 
-    // ── Input handlers (client-side, fire RPCs) ───────────────────────────────
+    // ── ALS input handlers ────────────────────────────────────────────────────
+private:
+    void Input_OnLookMouse(const FInputActionValue& ActionValue);
+    void Input_OnLook(const FInputActionValue& ActionValue);
+    void Input_OnMove(const FInputActionValue& ActionValue);
+    void Input_OnSprint(const FInputActionValue& ActionValue);
+    void Input_OnWalk();
+    void Input_OnCrouch();
+    void Input_OnSwitchShoulder();
 
-    void Input_MoveForward(float Value);
-    void Input_MoveRight(float Value);
-    void Input_MoveUp(float Value);
-    void Input_LookUp(float Value);
-    void Input_LookRight(float Value);
+    // ── Ability input handlers ────────────────────────────────────────────────
+private:
     void Input_AbilityWhisper();
     void Input_AbilityShiver();
     void Input_AbilitySpook();
-    void Input_AbilityPassThroughPressed();
-    void Input_AbilityPassThroughReleased();
     void Input_AbilityManifest();
+    void Input_Interact();
 
     // ── Server RPCs ───────────────────────────────────────────────────────────
-
+private:
     UFUNCTION(Server, Reliable, WithValidation)
     void Server_ActivateAbility(EDeadAbility Ability);
     bool Server_ActivateAbility_Validate(EDeadAbility Ability) { return true; }
     void Server_ActivateAbility_Implementation(EDeadAbility Ability);
 
     UFUNCTION(Server, Reliable, WithValidation)
-    void Server_SetPassThrough(bool bEnable);
-    bool Server_SetPassThrough_Validate(bool bEnable) { return true; }
-    void Server_SetPassThrough_Implementation(bool bEnable);
+    void Server_Interact(FVector TraceStart, FVector TraceEnd);
+    bool Server_Interact_Validate(FVector TraceStart, FVector TraceEnd) { return true; }
+    void Server_Interact_Implementation(FVector TraceStart, FVector TraceEnd);
 
-    // ── Multicast RPCs — broadcast ability effects to all clients ─────────────
-    //   These play cosmetic feedback (sounds, particles) on every machine.
-    //   They do NOT apply gameplay effects — that happens server-side first.
-
+    // ── Multicast RPCs ────────────────────────────────────────────────────────
+private:
     UFUNCTION(NetMulticast, Unreliable)
     void Multicast_PlayWhisperEffect();
     void Multicast_PlayWhisperEffect_Implementation();
@@ -237,43 +259,24 @@ private:
     void Multicast_PlaySpookEffect();
     void Multicast_PlaySpookEffect_Implementation();
 
-    // ── Ability execution (server-only internal methods) ──────────────────────
-
+    // ── Ability execution (server-only) ──────────────────────────────────────
+private:
     void Execute_Whisper();
     void Execute_Shiver();
     void Execute_Spook();
     void Execute_Manifestation();
     void Execute_FullManifestation();
-
-    /** Apply fear to all Living players within Radius, up to MaxTargets. */
     void ApplyFearInRadius(float Radius, float FearAmount, int32 MaxTargets = 2);
 
-    // ── Pass-through drain (server tick) ─────────────────────────────────────
-
-    void TickPassThroughEnergy(float DeltaTime);
-
-    // ── Delegate bindings ─────────────────────────────────────────────────────
-
+    // ── Helpers ───────────────────────────────────────────────────────────────
+private:
     void BindComponentDelegates();
     void BindPhaseEvents();
-
-    // ── Phase unlock helpers ──────────────────────────────────────────────────
-
     void SetAbilityUnlockFlag(EDeadAbility Ability, bool bUnlocked);
     int32 AbilityToBitIndex(EDeadAbility Ability) const;
     float GetEnergyCostForAbility(EDeadAbility Ability) const;
-
-    // ── Typed PlayerState access ──────────────────────────────────────────────
-
     ADeadPlayerState* GetDeadPlayerState() const;
-    
 
-    // ── Server-only state ─────────────────────────────────────────────────────
-
-    bool bPassThroughHeld = false; // Is the pass-through key currently held?
-    
-protected:
-    UFUNCTION() // Obligatoire pour AddDynamic
-    void TrackDepletionInPlayerState();
-
+    UFUNCTION()
+    void HandleSpecterDepleted();
 };

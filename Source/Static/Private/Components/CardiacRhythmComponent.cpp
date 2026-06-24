@@ -67,7 +67,7 @@ void UCardiacRhythmComponent::TickComponent(
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
     // Only the server mutates rhythm — clients just read replicated data.
-    if (!GetOwner() || !GetOwner()->HasAuthority()) return;
+    if (!GetOwner() || !GetOwner()->GetWorld() || GetOwner()->GetWorld()->GetNetMode() == NM_Client) return;
 
     // If the player is already fleeing, no more updates needed.
     if (bFleeing) return;
@@ -92,7 +92,11 @@ void UCardiacRhythmComponent::TickComponent(
 void UCardiacRhythmComponent::AddRhythm(float Delta)
 {
     // Defensive: only mutate on server.
-    if (!GetOwner() || !GetOwner()->HasAuthority()) return;
+    // We check the component's own authority rather than the owner's,
+    // because in multiplayer the owner (Living character) is server-authoritative
+    // even though it's possessed by a client controller.
+    if (!GetOwner()) return;
+    if (!GetOwner()->GetWorld() || GetOwner()->GetWorld()->GetNetMode() == NM_Client) return;
     if (bFleeing) return;
     if (Delta <= 0.0f) return;
 
@@ -120,7 +124,8 @@ void UCardiacRhythmComponent::AddRhythm(float Delta)
 
 void UCardiacRhythmComponent::ApplyCalm(float Amount)
 {
-    if (!GetOwner() || !GetOwner()->HasAuthority()) return;
+    if (!GetOwner()) return;
+    if (!GetOwner()->GetWorld() || GetOwner()->GetWorld()->GetNetMode() == NM_Client) return;
     if (bFleeing) return;
 
     // Receiving calm resets the scare timer — you're safe here.
@@ -197,8 +202,10 @@ void UCardiacRhythmComponent::SetRhythm(float NewValue)
 {
     CurrentRhythm = FMath::Clamp(NewValue, 0.0f, MaxRhythm);
 
+    UE_LOG(LogTemp, Log, TEXT("[Cardiac] Rhythm updated: %.1f / %.1f (%.0f%%)"),
+        CurrentRhythm, MaxRhythm, GetNormalizedRhythm() * 100.0f);
+
     // Push UI update to the owning client via RPC.
-    // GetNormalizedRhythm() is safe to call here because CurrentRhythm is set.
     Client_NotifyRhythmChanged(GetNormalizedRhythm());
 }
 

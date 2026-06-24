@@ -2,9 +2,9 @@
 
 #include "CoreMinimal.h"
 #include "Actors/WardActorBase.h"
-#include "Characters/LivingCharacter.h"
 #include "ChalkCircleWardActor.generated.h"
 
+class ALivingCharacter;
 // ─────────────────────────────────────────────────────────────────────────────
 // AChalkCircleWardActor
 //
@@ -31,9 +31,8 @@
 //
 //   SPEED PENALTY:
 //   Dead characters inside the circle move at a reduced speed (SlowFactor).
-//   This is applied by modifying GhostMovementComponent::MaxFlySpeed while
-//   inside, and restored on exit. It's a soft deterrent — they can still act,
-//   just sluggishly.
+//   Applied directly to UCharacterMovementComponent::MaxWalkSpeed.
+//   
 //
 //   EDITOR SETUP:
 //   1. Create BP_ChalkCircle from this class.
@@ -57,7 +56,8 @@ public:
 
     /**
      * Speed multiplier applied to Dead characters inside the circle.
-     * 0.5 = half speed. Applied to MaxFlySpeed on the GhostMovementComponent.
+     * 0.5 = half speed. Applied to MaxWalkSpeed on the movement component
+     * and restored to the ALS default on exit.
      */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chalk Circle",
         meta = (ClampMin = "0.1", ClampMax = "1.0"))

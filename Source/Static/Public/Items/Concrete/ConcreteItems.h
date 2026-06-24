@@ -7,7 +7,7 @@
 // Forward declarations
 class ASaltWardActor;
 class ASageZoneActor;
-class AChalkCircleActor;
+class AChalkCircleWardActor;
 class ABurialGroundsActor;
 class AMatchFlameActor;
 

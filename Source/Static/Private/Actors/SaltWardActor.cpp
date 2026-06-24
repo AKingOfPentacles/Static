@@ -1,7 +1,6 @@
 ﻿#include "Actors/SaltWardActor.h"
 #include "Characters/DeadCharacter.h"
 #include "Components/SpecterEnergyComponent.h"
-#include "Components/GhostMovementComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/DecalComponent.h"
 #include "Components/SphereComponent.h"
@@ -27,18 +26,10 @@ ASaltWardActor::ASaltWardActor()
     SetRootComponent(BarrierBox);
 
     // ── COLLISION SETUP ───────────────────────────────────────────────────────
-    // The barrier uses a custom collision profile "SaltBarrier" which you must
-    // create in Project Settings → Collision → Preset → New.
-    // Settings for "SaltBarrier":
-    //   CollisionEnabled : Query and Physics
-    //   Object Type      : WorldStatic
-    //   All channels     : Ignore
-    //   DeadMovement     : Block   ← the custom channel you created
-    //
-    // This means the barrier is INVISIBLE to everything except the Dead capsule,
-    // which is set to Block DeadMovement in its normal collision profile.
-    // When the Dead enters pass-through mode, their capsule switches to
-    // NoCollision — so they ignore this barrier entirely.
+    // "SaltBarrier" blocks only the DeadMovement channel.
+    // Dead in DeadSpectral profile are stopped by it.
+    // Dead transiting via a door have NoCollision temporarily — they pass freely
+    // but the drain sphere still catches them and drains energy.
     BarrierBox->SetCollisionProfileName(TEXT("SaltBarrier"));
 
     // ── Salt mesh — visual floor line ────────────────────────────────────────
@@ -125,7 +116,8 @@ void ASaltWardActor::Tick(float DeltaTime)
         if (!Energy) continue;
 
         // Drain at the configured per-second rate.
-        // The Dead CHOSE to enter pass-through to cross the salt — they pay for it.
+        // Dead are only inside this zone if they passed through a nearby door —
+        // the door transit temporarily gave them NoCollision to enter.
         const float Drain = BurnThroughDrainPerSecond * DeltaTime;
         Energy->ApplyDefenseHit(Drain);
     }
@@ -150,31 +142,17 @@ void ASaltWardActor::OnDeadEntered(UPrimitiveComponent* OverlappedComp,
 
     DeadInsideDrainZone.AddUnique(Dead);
 
-    // If the Dead is in pass-through mode when they enter, they're actively
-    // breaching. Record this so we can apply breach damage when they exit.
-    UGhostMovementComponent* Ghost = Dead->GetGhostMovementComponent();
-    if (Ghost && Ghost->IsPassingThrough())
-    {
-        BreachingDead.Add(Dead);
-        UE_LOG(LogTemp, Log, TEXT("[SaltWard] Dead entering breach transit."));
-    }
-    else
-    {
-        // This shouldn't happen normally (barrier blocks them) but could occur
-        // if a Dead player somehow slipped in. Apply a hard energy hit immediately.
-        if (USpecterEnergyComponent* Energy = Dead->GetSpecterEnergyComponent())
-        {
-            Energy->ApplyDefenseHit(DefenseStrength);
-        }
-        UE_LOG(LogTemp, Warning,
-            TEXT("[SaltWard] Dead inside barrier without pass-through — applying entry hit."));
-    }
+    // Any Dead character inside the salt zone is passing through a door
+    // nearby — track them as breaching.
+    BreachingDead.Add(Dead);
+
+    UE_LOG(LogTemp, Log, TEXT("[SaltWard] Dead entering drain zone — tracking breach."));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // OnDeadExited
 //   When the Dead leaves the drain zone we check if they completed a breach.
-//   A complete breach = entered in pass-through AND exited on the other side.
+//   A complete breach = entered via door transit AND exited the other side.
 // ─────────────────────────────────────────────────────────────────────────────
 
 void ASaltWardActor::OnDeadExited(UPrimitiveComponent* OverlappedComp,

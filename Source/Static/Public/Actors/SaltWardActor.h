@@ -11,50 +11,38 @@ class UStaticMeshComponent;
 // ASaltWardActor
 //
 //   A salt line the Living pour across a doorway or corridor to block the Dead.
-//   This is the most mechanically complex ward because it works on two levels:
+//   Works on two levels:
 //
 //   LAYER 1 — PHYSICAL BARRIER (blocks normal spectral movement)
-//   A UBoxComponent set to the "DeadBarrier" custom collision channel blocks
-//   the Dead capsule when they are in normal Spectral mode. They simply cannot
-//   walk through it without using Pass Through.
+//   A UBoxComponent using the "SaltBarrier" collision profile blocks the Dead
+//   capsule when it is in the "DeadSpectral" profile (normal movement).
+//   The Dead cannot walk through it without going through a nearby door.
 //
-//   LAYER 2 — ENERGY DRAIN (punishes pass-through)
-//   A wider USphereComponent (inherited from AWardActorBase as OverlapSphere)
-//   detects when the Dead is inside the ward volume — whether they walked into
-//   it normally (impossible without pass-through, so only relevant mid-transit)
-//   or phased through it. While overlapping, energy is drained every tick at
-//   BurnThroughDrainRate. This makes passing through salt COSTLY.
+//   LAYER 2 — ENERGY DRAIN (punishes door pass-through near the salt line)
+//   When the Dead passes through a door next to this salt line, their capsule
+//   temporarily becomes NoCollision, allowing them to enter the drain sphere.
+//   While overlapping, BurnThroughDrainPerSecond is drained every Tick.
+//   On exit, BreachDamageAmount reduces barrier integrity.
 //
 //   BARRIER INTEGRITY:
-//   The barrier has an integrity value (0–100). Each time the Dead fully passes
-//   through (enters AND exits the drain zone while in pass-through mode), integrity
-//   drops by BreachDamagAmount. At zero integrity the salt line is broken —
-//   the barrier component is disabled and the ward becomes a normal overlap-drain
-//   only until it dissolves. This models salt being scattered by the ghost.
+//   Each full transit (enter + exit the drain zone) reduces integrity by
+//   BreachDamageAmount. At zero the barrier collapses — the box is disabled
+//   but drain continues until the ward expires. This models scattered salt.
 //
 //   SHAPE:
-//   Spawned at the HitResult surface point and oriented to the surface normal.
-//   USaltItem places it flat on the floor; the box extends up ~120cm to block
-//   a doorway. Width is configurable (default 200cm = most doorways).
+//   Spawned at the HitResult surface point oriented to the surface normal.
+//   USaltItem places it flat on the floor; the box extends up BarrierHeight cm.
 //
-//   CUSTOM COLLISION CHANNEL SETUP (required in editor before first compile):
-//   1. Edit → Project Settings → Collision → New Trace Channel.
-//   2. Name: "DeadMovement", Default Response: Block.
-//   3. Open BP_DeadCharacter → Capsule → Collision → Custom…
-//      Set DeadMovement to "Block" in Spectral mode, "Ignore" when pass-through.
-//      (We handle this in ADeadCharacter via SetCapsuleCollisionForSalt().)
-//   4. On BarrierBox below, set DeadMovement to Block, everything else Ignore.
-//
-//   WHY NOT USE AN OVERLAP + FORCE BACK?
-//   Teleporting/pushing characters server-side causes jarring corrections on
-//   clients due to movement prediction disagreement. A true blocking collision
-//   prevents movement at the client prediction level — far smoother.
+//   COLLISION PROFILES REQUIRED (set up in Project Settings → Collision):
+//   • "SaltBarrier" preset : blocks DeadMovement channel, ignores everything else
+//   • "DeadSpectral" preset : Pawn type, blocks DeadMovement only
+//   See Stage 1 of the editor setup guide for exact settings.
 //
 //   EDITOR SETUP:
 //   1. Create BP_SaltWard from this class.
-//   2. Assign a salt-line StaticMesh (a flat white line decal mesh or plane).
-//   3. Set BarrierWidth to match the doorway you most commonly place it in.
-//   4. Assign this to USaltItem.SaltWardClass.
+//   2. Assign a salt-line StaticMesh (flat white plane).
+//   3. Set BarrierWidth to match your doorway width.
+//   4. Assign to USaltItem.SaltWardClass in the InventoryComponent ItemClassMap.
 // ─────────────────────────────────────────────────────────────────────────────
 UCLASS()
 class STATIC_API ASaltWardActor : public AWardActorBase
@@ -116,8 +104,8 @@ protected:
     // ── Components ────────────────────────────────────────────────────────────
 
     /**
-     * The actual blocking volume. Uses the "DeadBarrier" custom collision channel.
-     * This is what physically stops non-pass-through Dead characters.
+     * The physical blocking volume using the "SaltBarrier" collision profile.
+     * Stops Dead characters in DeadSpectral mode. Disabled when barrier breaks.
      */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Salt Ward|Components")
     UBoxComponent* BarrierBox;
@@ -168,8 +156,9 @@ private:
     TArray<TWeakObjectPtr<ADeadCharacter>> DeadInsideDrainZone;
 
     /**
-     * Tracks which Dead characters entered the drain zone while in pass-through.
-     * When they EXIT, we know they completed a breach and record the damage.
+     * Tracks Dead characters currently transiting via a nearby door.
+     * When they EXIT the drain zone, we know they completed a breach
+     * and apply BreachDamageAmount to barrier integrity.
      */
     TSet<TWeakObjectPtr<ADeadCharacter>> BreachingDead;
 
