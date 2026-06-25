@@ -4,7 +4,6 @@
 #include "Components/SpecterEnergyComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/BoxComponent.h"
-#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Engine/World.h"
@@ -144,71 +143,62 @@ void ADoorActor::PassThrough(ADeadCharacter* Dead)
         return;
     }
 
-    // ── Disable capsule collision ─────────────────────────────────────────────
-    // The capsule switches to NoCollision so the Dead can move through the door
-    // mesh freely. The door itself never opens.
-    UCapsuleComponent* Capsule = Dead->GetCapsuleComponent();
-    if (Capsule)
-    {
-        Capsule->SetCollisionProfileName(TEXT("NoCollision"));
-    }
+    // ── Determine which side the Dead is on ───────────────────────────────────
+    // The door's forward vector points through the door plane.
+    // If the Dead is in front (positive dot) we teleport them behind, and vice versa.
+    // We offset by PassThroughDepth cm so they land clear of the door mesh.
+    const FVector DoorForward  = GetActorForwardVector();
+    const FVector ToDead       = Dead->GetActorLocation() - GetActorLocation();
+    const float   Side         = FVector::DotProduct(DoorForward, ToDead);
+    const FVector ExitOffset   = (Side >= 0.0f ? -DoorForward : DoorForward)
+                                 * PassThroughDepth;
 
-    // ── Apply forward impulse ─────────────────────────────────────────────────
-    // Push the Dead through the door in the direction they're facing.
-    // We override velocity directly — cleaner than LaunchCharacter for flying mode.
-    if (UCharacterMovementComponent* Movement = Dead->GetCharacterMovement())
-    {
-        const FVector ForwardPush = Dead->GetActorForwardVector() * PassThroughImpulse;
-        Movement->Velocity = FVector(ForwardPush.X, ForwardPush.Y, Movement->Velocity.Z);
-    }
+    const FVector ExitLocation = GetActorLocation()
+                                 + ExitOffset
+                                 + FVector(0.0f, 0.0f, 90.0f); // Keep at character height
 
-    // ── Play cosmetic effect on all clients ───────────────────────────────────
+    // ── Schedule the teleport after PassThroughDuration ──────────────────────
+    // Brief delay gives the feel of slipping through rather than instant warp.
+    // During the delay the Dead walks into the door normally — the door is
+    // the only thing blocking them, so they visually press against it.
     Multicast_PlayPassThroughEffect(Dead);
 
-    // ── Re-enable collision after transit duration ─────────────────────────────
-    // Bind with a weak lambda — if the Dead is destroyed mid-transit, the timer
-    // fires harmlessly.
-    TWeakObjectPtr<ADoorActor> WeakSelf(this);
+    TWeakObjectPtr<ADoorActor>    WeakSelf(this);
     TWeakObjectPtr<ADeadCharacter> WeakDead(Dead);
 
     GetWorldTimerManager().SetTimer(PassThroughTimerHandle,
-        FTimerDelegate::CreateLambda([WeakSelf, WeakDead]()
+        FTimerDelegate::CreateLambda([WeakSelf, WeakDead, ExitLocation]()
         {
             if (WeakSelf.IsValid() && WeakDead.IsValid())
             {
-                WeakSelf->FinishPassThrough(WeakDead.Get());
+                WeakSelf->FinishPassThrough(WeakDead.Get(), ExitLocation);
             }
         }),
         PassThroughDuration, false);
 
+    UE_LOG(LogTemp, Log, TEXT("[Door] '%s' passing through '%s'. Exit: %s"),
+        *Dead->GetName(), *GetName(), *ExitLocation.ToString());
     UE_LOG(LogTemp, Log, TEXT("[Door] '%s' passing through door '%s'. Cost: %.0f energy."),
-        *Dead->GetName(), *GetName(), PassThroughEnergyCost);
+    *Dead->GetName(), *GetName(), PassThroughEnergyCost);
 }
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FinishPassThrough — restore collision after transit
 // ─────────────────────────────────────────────────────────────────────────────
 
-void ADoorActor::FinishPassThrough(ADeadCharacter* Dead)
+void ADoorActor::FinishPassThrough(ADeadCharacter* Dead, FVector ExitLocation)
 {
     if (!Dead) return;
 
-    UCapsuleComponent* Capsule = Dead->GetCapsuleComponent();
-    if (Capsule)
-    {
-        // Restore to DeadSpectral — blocked by salt wards but not world geometry.
-        // If Stage 1 collision profiles were skipped, fall back to "Pawn".
-        Capsule->SetCollisionProfileName(TEXT("DeadSpectral"));
-    }
+    // Teleport the Dead to the other side of the door.
+    // ETeleportType::TeleportPhysics ensures the movement component
+    // doesn't fight the position change.
+    Dead->SetActorLocation(ExitLocation, false, nullptr,
+        ETeleportType::TeleportPhysics);
 
-    // Stop the forward impulse so the Dead doesn't keep sliding.
-    if (UCharacterMovementComponent* Movement = Dead->GetCharacterMovement())
-    {
-        Movement->Velocity = FVector::ZeroVector;
-    }
-
-    UE_LOG(LogTemp, Log, TEXT("[Door] '%s' pass-through complete. Collision restored."),
-        *Dead->GetName());
+    UE_LOG(LogTemp, Log, TEXT("[Door] '%s' teleported to other side: %s"),
+        *Dead->GetName(), *ExitLocation.ToString());
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

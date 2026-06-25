@@ -88,21 +88,20 @@ public:
     float PassThroughEnergyCost = 12.0f;
 
     /**
-     * How long (seconds) the Dead's capsule stays passable during transit.
-     * 0.5s gives a brief ghostly slip-through feel.
+     * How long (seconds) before the Dead teleports to the other side.
+     * Gives the feel of slipping through rather than instant warp.
      */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door|PassThrough",
         meta = (ClampMin = "0.1"))
     float PassThroughDuration = 0.5f;
 
     /**
-     * Forward impulse applied to push the Dead through the door (cm/s).
-     * Should be enough to cross a standard door thickness (~20cm) in
-     * PassThroughDuration seconds.
+     * How far past the door center the Dead lands after passing through (cm).
+     * Should be at least half the door thickness + capsule radius (~50cm).
      */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door|PassThrough",
-        meta = (ClampMin = "50.0"))
-    float PassThroughImpulse = 300.0f;
+        meta = (ClampMin = "30.0"))
+    float PassThroughDepth = 80.0f;
 
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Door|Components")
@@ -132,7 +131,7 @@ private:
     void Multicast_PlayPassThroughEffect_Implementation(ADeadCharacter* Dead);
 
     /** Re-enable the Dead character's capsule after transit completes. */
-    void FinishPassThrough(ADeadCharacter* Dead);
+    void FinishPassThrough(ADeadCharacter* Dead, FVector ExitLocation);
 
     FTimerHandle PassThroughTimerHandle;
 };
