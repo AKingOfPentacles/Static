@@ -14,15 +14,17 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="729f40ae-9101-4c2e-ac4b-169b0c5d5590" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/Source/Static/Private/Systems/StaticMansionGameData.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Source/Static/Public/Systems/StaticMansionGameData.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Static.dir/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Static.dir/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/PolygonHorrorMansion/EpicContent/Mannequin/Character/Mesh/UE4_Mannequin_Skeleton.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/PolygonHorrorMansion/EpicContent/Mannequin/Character/Mesh/UE4_Mannequin_Skeleton.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/StaticMansion/Blueprints/Actors/BP_Door.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/StaticMansion/Blueprints/Actors/BP_Door.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/StaticMansion/Blueprints/Characters/BP_DeadCharacter.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/StaticMansion/Blueprints/Characters/BP_DeadCharacter.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/StaticMansion/Blueprints/Characters/BP_LivingCharacter.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/StaticMansion/Blueprints/Characters/BP_LivingCharacter.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Core/Levels/L_Playground/2/Y5/4CVVIYCJE0T46CIKR6IWGP.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Core/Levels/L_Playground/5/CH/2MNPUFGCPBHMXF8Y8G1A9O.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Core/Levels/L_Playground/5/CH/2MNPUFGCPBHMXF8Y8G1A9O.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/StaticMansion/Blueprints/Core/BP_StaticMansionGameMode.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/StaticMansion/Blueprints/Core/BP_StaticMansionGameMode.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source.zip" beforeDir="false" afterPath="$PROJECT_DIR$/Source.zip" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/Static/Private/Characters/DeadCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/Static/Private/Characters/DeadCharacter.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/Static/Private/Components/SpecterEnergyComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/Static/Private/Components/SpecterEnergyComponent.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/Static/Private/Game/Staticmansiongamemode.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/Static/Private/Game/Staticmansiongamemode.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/Static/Public/Components/SpecterEnergyComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/Static/Public/Components/SpecterEnergyComponent.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/Static/Public/Game/Staticmansiongamemode.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/Static/Public/Game/Staticmansiongamemode.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/Static/Public/Systems/GamePhaseManager.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/Static/Public/Systems/GamePhaseManager.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Static.uproject.DotSettings.user" beforeDir="false" afterPath="$PROJECT_DIR$/Static.uproject.DotSettings.user" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -45,9 +47,13 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="cidr-memory-view://0" root0="FORCE_HIGHLIGHTING" />
+    <setting file="cidr-memory-view://6" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../EPIC_LIBRARY/UE_5.4/Engine/Source/Runtime/CoreUObject/Public/UObject/Class.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../EPIC_LIBRARY/UE_5.4/Engine/Source/Runtime/Engine/Classes/GameFramework/Pawn.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../EPIC_LIBRARY/UE_5.4/Engine/Source/Runtime/Engine/Private/Actor.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../EPIC_LIBRARY/UE_5.4/Engine/Source/Runtime/Engine/Private/Subsystems/SubsystemCollection.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/Static/Private/Systems/StaticMansionGameData.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/Static/Public/Systems/StaticMansionGameData.h" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="McpProjectServerCommands">
     <commands />
@@ -252,6 +258,7 @@
       <workItem from="1782483332696" duration="5219000" />
       <workItem from="1782491911542" duration="1300000" />
       <workItem from="1782494608860" duration="1701000" />
+      <workItem from="1782509087948" duration="2935000" />
     </task>
     <servers />
   </component>

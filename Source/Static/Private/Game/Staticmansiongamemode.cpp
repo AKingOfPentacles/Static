@@ -42,8 +42,10 @@ void AStaticMansionGameMode::BeginPlay()
 {
     Super::BeginPlay();
 
-    // Subscribe to phase manager victory events so the GameMode reacts
-    // when GamePhaseManager calls TriggerLivingVictory / TriggerDeadVictory.
+    // Appliquer le DataAsset aux systèmes dès le démarrage.
+    ApplyGameData();
+
+    // Subscribe to phase manager victory events.
     if (UGamePhaseManager* PM = GetPhaseManager())
     {
         PM->OnPhaseChanged.AddDynamic(this,
@@ -52,6 +54,62 @@ void AStaticMansionGameMode::BeginPlay()
 
     UE_LOG(LogTemp, Log, TEXT("[GameMode] BeginPlay. Waiting for players..."));
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GetGameData — static accessor utilisable depuis n'importe quel système
+//   Exemple d'utilisation :
+//   if (auto* Data = AStaticMansionGameMode::GetGameData(this))
+//       Cardiac->MaxRhythm = Data->CardiacMaxRhythm;
+// ─────────────────────────────────────────────────────────────────────────────
+
+UStaticMansionGameData* AStaticMansionGameMode::GetGameData(const UObject* WorldContext)
+{
+    if (!WorldContext) return nullptr;
+
+    if (UWorld* World = GEngine->GetWorldFromContextObject(
+        WorldContext, EGetWorldErrorMode::LogAndReturnNull))
+    {
+        if (AStaticMansionGameMode* GM = World->GetAuthGameMode<AStaticMansionGameMode>())
+        {
+            return GM->GameData;
+        }
+    }
+    return nullptr;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ApplyGameData
+//   Pousse les valeurs du DataAsset vers tous les systèmes concernés.
+//   Appelé dans BeginPlay — avant que les joueurs se connectent.
+//   Si GameData est null, les valeurs par défaut des composants restent.
+// ─────────────────────────────────────────────────────────────────────────────
+
+void AStaticMansionGameMode::ApplyGameData()
+{
+    if (!GameData)
+    {
+        UE_LOG(LogTemp, Warning,
+            TEXT("[GameMode] Aucun GameData assigné. "
+                 "Assigner DA_StaticMansionGameData dans BP_StaticMansionGameMode."));
+        return;
+    }
+
+    UE_LOG(LogTemp, Log, TEXT("[GameMode] Application du GameData..."));
+
+    // ── Phase durations ────────────────────────────────────────────────────
+    if (UGamePhaseManager* PM = GetPhaseManager())
+    {
+        PM->ExplorationDuration   = GameData->ExplorationDuration;
+        PM->ProtectionDuration    = GameData->ProtectionDuration;
+        PM->ConfrontationDuration = GameData->ConfrontationDuration;
+    }
+
+    // ── GameMode rules ─────────────────────────────────────────────────────
+    PreNightCountdown = GameData->PreNightCountdown;
+
+    UE_LOG(LogTemp, Log, TEXT("[GameMode] GameData appliqué avec succès."));
+}
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tick — drives pre-night countdown and time-sync to GameState

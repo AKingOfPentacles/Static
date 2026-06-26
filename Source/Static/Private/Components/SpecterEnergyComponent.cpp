@@ -24,7 +24,7 @@ void USpecterEnergyComponent::BeginPlay()
     // Start with full energy so abilities work immediately in testing.
     // In the final game, Dead start at 0 and collect Memorabilia in Phase 1.
     // Change this back to 0.0f when Memorabilia actors are placed in the level.
-    CurrentEnergy = MaxEnergy;
+    CurrentEnergy = 0;
     bInDepletionPenalty = false;
 }
 
@@ -60,10 +60,10 @@ void USpecterEnergyComponent::TickComponent(
     // Passive regen only when NOT in depletion penalty.
     // Phase-gating (e.g. "no regen in Phase 1") can be layered here later
     // by checking UGamePhaseManager::GetCurrentPhase().
-    if (!bInDepletionPenalty && CurrentEnergy < GetCurrentEnergyCap())
-    {
-        GainEnergy(PassiveRegenRate * DeltaTime);
-    }
+    // if (!bInDepletionPenalty && CurrentEnergy < GetCurrentEnergyCap())
+    // {
+    //     GainEnergy(PassiveRegenRate * DeltaTime);
+    // }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -103,6 +103,7 @@ void USpecterEnergyComponent::GainEnergy(float Amount)
 
     const float Cap = GetCurrentEnergyCap();
     SetEnergy(FMath::Min(CurrentEnergy + Amount, Cap));
+    UE_LOG(LogTemp, Log, TEXT("[Specter] Gained %.1f energy. New total: %.1f"), Amount, CurrentEnergy);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

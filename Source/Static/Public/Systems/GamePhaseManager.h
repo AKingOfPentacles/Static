@@ -99,15 +99,15 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase|Durations",
         meta = (ClampMin = "10.0"))
-    float ExplorationDuration = 10.0f;     // 6 minutes 360
+    float ExplorationDuration = 60.0f;     // 6 minutes 360
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase|Durations",
-        meta = (ClampMin = "10.0"))
+        meta = (ClampMin = "60.0"))
     float ProtectionDuration = 10.0f;      // 4 minutes 240
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Phase|Durations",
         meta = (ClampMin = "10.0"))
-    float ConfrontationDuration = 10.0f;   // 3 minutes 180
+    float ConfrontationDuration = 60.0f;   // 3 minutes 180
 
 private:
     // ── Internal state ───────────────────────────────────────────────────────

@@ -2,8 +2,9 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
-#include "Systems/GamePhaseManager.h"   // EGamePhase
-#include "Game/StaticMansionGameState.h" // EMatchResult
+#include "Systems/GamePhaseManager.h"
+#include "Game/StaticMansionGameState.h"
+#include "Systems/StaticMansionGameData.h"
 #include "StaticMansionGameMode.generated.h"
 
 // Forward declarations
@@ -126,6 +127,19 @@ public:
 
     // ── Configuration ─────────────────────────────────────────────────────────
 
+    /**
+     * DataAsset contenant toutes les variables de tuning du jeu.
+     * Créer DA_StaticMansionGameData dans le Content Browser et l'assigner ici.
+     * Si null, les valeurs par défaut des composants individuels sont utilisées.
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GameMode|Data",
+        meta = (ToolTip = "Assigner DA_StaticMansionGameData ici pour centraliser le tuning."))
+    TObjectPtr<UStaticMansionGameData> GameData;
+
+    /** Accessor statique — n'importe quel système peut appeler GetGameData(World). */
+    UFUNCTION(BlueprintPure, Category = "GameMode|Data", meta = (WorldContext = "WorldContext"))
+    static UStaticMansionGameData* GetGameData(const UObject* WorldContext);
+
     /** Pawn class to spawn for Living players. Assign in Blueprint defaults. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GameMode|Classes")
     TSubclassOf<ALivingCharacter> LivingCharacterClass;
@@ -190,6 +204,9 @@ private:
     float PreNightTimer = -1.0f; // -1 = not yet started
 
     // ── Internal helpers ──────────────────────────────────────────────────────
+
+    /** Pousse les valeurs du GameData vers tous les systèmes. Appelé dans BeginPlay. */
+    void ApplyGameData();
 
     /** Assign the next available team to a newly joined controller. */
     EPlayerTeam AssignTeam(APlayerController* PC);

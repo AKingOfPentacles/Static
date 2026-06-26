@@ -91,7 +91,10 @@ public:
     bool IsInPenalty() const { return bInDepletionPenalty; }
 
     // ── Tuning ────────────────────────────────────────────────────────────────
-
+   
+    UPROPERTY(ReplicatedUsing = OnRep_CurrentEnergy)
+    float CurrentEnergy = 0.0f;
+    
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Specter|Tuning",
         meta = (ClampMin = "1.0"))
     float MaxEnergy = 100.0f;
@@ -128,8 +131,7 @@ public:
 private:
     // ── Replicated state ──────────────────────────────────────────────────────
 
-    UPROPERTY(ReplicatedUsing = OnRep_CurrentEnergy)
-    float CurrentEnergy = 0.0f;
+
 
     UPROPERTY(ReplicatedUsing = OnRep_Penalty)
     bool bInDepletionPenalty = false;
