@@ -706,11 +706,11 @@ void ADeadCharacter::StopFloating()
     // Snap to exact exit point location and rotation.
     // FloatWaypoint2 is the exit world position set by ADoorActor.
     // FloatExitRotation is the exit point's world rotation set by ADoorActor.
-    if (!FloatWaypoint2.IsZero())
-    {
-        SetActorLocationAndRotation(FloatWaypoint2, FloatExitRotation,
-            false, nullptr, ETeleportType::TeleportPhysics);
-    }
+    // if (!FloatWaypoint2.IsZero())
+    // {
+    //     SetActorLocationAndRotation(FloatWaypoint2, FloatExitRotation,
+    //         false, nullptr, ETeleportType::TeleportPhysics);
+    // }
 
     FloatWaypoint1     = FVector::ZeroVector;
     FloatWaypoint2     = FVector::ZeroVector;

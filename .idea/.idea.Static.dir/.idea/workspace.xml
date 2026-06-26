@@ -15,23 +15,14 @@
   <component name="ChangeListManager">
     <list default="true" id="729f40ae-9101-4c2e-ac4b-169b0c5d5590" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Static.dir/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Static.dir/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/PolygonHorrorMansion/EpicContent/Mannequin/Character/Mesh/UE4_Mannequin_Skeleton.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/PolygonHorrorMansion/EpicContent/Mannequin/Character/Mesh/UE4_Mannequin_Skeleton.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/StaticMansion/Blueprints/Actors/BP_Door.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/StaticMansion/Blueprints/Actors/BP_Door.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/StaticMansion/Blueprints/Characters/BP_DeadCharacter.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/StaticMansion/Blueprints/Characters/BP_DeadCharacter.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/StaticMansion/Blueprints/Characters/BP_LivingCharacter.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/StaticMansion/Blueprints/Characters/BP_LivingCharacter.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Core/Levels/L_Playground/1/83/GTL7EWJJQ43OCMZTQLGAES.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Core/Levels/L_Playground/1/83/GTL7EWJJQ43OCMZTQLGAES.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Core/Levels/L_Playground/2/55/YW2PAGNSJQAB8ROTP9CX3Q.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Core/Levels/L_Playground/2/55/YW2PAGNSJQAB8ROTP9CX3Q.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Core/Levels/L_Playground/2/Y5/4CVVIYCJE0T46CIKR6IWGP.uasset" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Core/Levels/L_Playground/5/CH/2MNPUFGCPBHMXF8Y8G1A9O.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Core/Levels/L_Playground/5/CH/2MNPUFGCPBHMXF8Y8G1A9O.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Core/Levels/L_Playground/B/YZ/57PRDM6E9HGG01YLSE8QQY.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Core/Levels/L_Playground/B/YZ/57PRDM6E9HGG01YLSE8QQY.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Core/Levels/L_Playground/C/BP/7MN0G3ALDX3P47DS4VG50L.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Core/Levels/L_Playground/C/BP/7MN0G3ALDX3P47DS4VG50L.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/ALS/Source/ALS/Private/AlsCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/ALS/Source/ALS/Private/AlsCharacter.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/ALS/Source/ALS/Private/Utility/AlsGameplayTags.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/ALS/Source/ALS/Private/Utility/AlsGameplayTags.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/ALS/Source/ALS/Public/AlsCharacter.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/ALS/Source/ALS/Public/AlsCharacter.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/ALS/Source/ALS/Public/Utility/AlsGameplayTags.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/ALS/Source/ALS/Public/Utility/AlsGameplayTags.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/Static/Private/Actors/DoorActor.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/Static/Private/Actors/DoorActor.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source.zip" beforeDir="false" afterPath="$PROJECT_DIR$/Source.zip" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/Static/Private/Characters/DeadCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/Static/Private/Characters/DeadCharacter.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/Static/Public/Actors/DoorActor.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/Static/Public/Actors/DoorActor.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/Static/Public/Characters/DeadCharacter.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/Static/Public/Characters/DeadCharacter.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Static.uproject.DotSettings.user" beforeDir="false" afterPath="$PROJECT_DIR$/Static.uproject.DotSettings.user" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -54,7 +45,7 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="cidr-memory-view://8" root0="FORCE_HIGHLIGHTING" />
+    <setting file="cidr-memory-view://0" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../EPIC_LIBRARY/UE_5.4/Engine/Source/Runtime/Engine/Classes/GameFramework/Pawn.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../EPIC_LIBRARY/UE_5.4/Engine/Source/Runtime/Engine/Private/Actor.cpp" root0="FORCE_HIGHLIGHTING" />
   </component>
@@ -259,6 +250,8 @@
       <workItem from="1782396401633" duration="16800000" />
       <workItem from="1782423018570" duration="2069000" />
       <workItem from="1782483332696" duration="5219000" />
+      <workItem from="1782491911542" duration="1300000" />
+      <workItem from="1782494608860" duration="1701000" />
     </task>
     <servers />
   </component>
