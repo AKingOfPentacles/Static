@@ -15,10 +15,23 @@
   <component name="ChangeListManager">
     <list default="true" id="729f40ae-9101-4c2e-ac4b-169b0c5d5590" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Static.dir/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Static.dir/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/StaticMansion/Blueprints/Actors/BP_Door.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/StaticMansion/Blueprints/Actors/BP_Door.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/StaticMansion/Blueprints/Characters/BP_DeadCharacter.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/StaticMansion/Blueprints/Characters/BP_DeadCharacter.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/StaticMansion/Blueprints/Characters/BP_LivingCharacter.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/StaticMansion/Blueprints/Characters/BP_LivingCharacter.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Core/Levels/L_Playground/1/83/GTL7EWJJQ43OCMZTQLGAES.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Core/Levels/L_Playground/1/83/GTL7EWJJQ43OCMZTQLGAES.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Core/Levels/L_Playground/2/55/YW2PAGNSJQAB8ROTP9CX3Q.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Core/Levels/L_Playground/2/55/YW2PAGNSJQAB8ROTP9CX3Q.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Core/Levels/L_Playground/5/CH/2MNPUFGCPBHMXF8Y8G1A9O.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Core/Levels/L_Playground/5/CH/2MNPUFGCPBHMXF8Y8G1A9O.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Core/Levels/L_Playground/B/YZ/57PRDM6E9HGG01YLSE8QQY.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Core/Levels/L_Playground/B/YZ/57PRDM6E9HGG01YLSE8QQY.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Core/Levels/L_Playground/C/BP/7MN0G3ALDX3P47DS4VG50L.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Core/Levels/L_Playground/C/BP/7MN0G3ALDX3P47DS4VG50L.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/ALS/Source/ALS/Private/AlsCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/ALS/Source/ALS/Private/AlsCharacter.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/ALS/Source/ALS/Private/Utility/AlsGameplayTags.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/ALS/Source/ALS/Private/Utility/AlsGameplayTags.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/ALS/Source/ALS/Public/AlsCharacter.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/ALS/Source/ALS/Public/AlsCharacter.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/ALS/Source/ALS/Public/Utility/AlsGameplayTags.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/ALS/Source/ALS/Public/Utility/AlsGameplayTags.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/Static/Private/Actors/DoorActor.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/Static/Private/Actors/DoorActor.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/Static/Private/Characters/DeadCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/Static/Private/Characters/DeadCharacter.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/Static/Public/Actors/DoorActor.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/Static/Public/Actors/DoorActor.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/Static/Public/Characters/DeadCharacter.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/Static/Public/Characters/DeadCharacter.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Static.uproject.DotSettings.user" beforeDir="false" afterPath="$PROJECT_DIR$/Static.uproject.DotSettings.user" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -34,14 +47,16 @@
     <option name="firstShow" value="false" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="4989" />
+    <option name="cachedIndexableFilesCount" value="24976" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="cidr-memory-view://6" root0="FORCE_HIGHLIGHTING" />
+    <setting file="cidr-memory-view://8" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../EPIC_LIBRARY/UE_5.4/Engine/Source/Runtime/Engine/Classes/GameFramework/Pawn.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../EPIC_LIBRARY/UE_5.4/Engine/Source/Runtime/Engine/Private/Actor.cpp" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="McpProjectServerCommands">
     <commands />
@@ -49,61 +64,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="0.0" />
-      <entry key="MS500" value="0.0" />
-      <entry key="S2" value="0.0" />
-      <entry key="S5" value="0.0" />
-      <entry key="S10" value="0.0" />
-      <entry key="S30" value="0.0" />
-      <entry key="S60" value="0.0" />
-      <entry key="M2" value="0.0" />
-      <entry key="M5" value="0.0" />
-      <entry key="M10" value="0.0" />
-      <entry key="M15" value="0.0" />
-      <entry key="M30" value="0.0" />
-      <entry key="H1" value="0.0" />
-      <entry key="H2" value="0.0" />
-      <entry key="H4" value="0.0" />
-      <entry key="D1" value="0.0" />
-      <entry key="W1" value="0.0" />
+      <entry key="MS100" value="1.402377468812294E-113" />
+      <entry key="MS500" value="2.715666746557986E-23" />
+      <entry key="S2" value="3.0104855428763895E-6" />
+      <entry key="S5" value="0.009555653025651093" />
+      <entry key="S10" value="0.15733155317943665" />
+      <entry key="S30" value="1.2945311919613947" />
+      <entry key="S60" value="2.9822902702668754" />
+      <entry key="M2" value="5.884271776491481" />
+      <entry key="M5" value="12.610526084090473" />
+      <entry key="M10" value="19.271823118702795" />
+      <entry key="M15" value="23.669791805270975" />
+      <entry key="M30" value="32.76056365125998" />
+      <entry key="H1" value="45.36196470522382" />
+      <entry key="H2" value="61.9844927228525" />
+      <entry key="H4" value="78.40647275968007" />
+      <entry key="D1" value="100.9906581440059" />
+      <entry key="W1" value="106.10373637946009" />
     </decayedCancelled>
     <decayedSelected>
-      <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0" />
-      <entry key="S2" value="1.0" />
-      <entry key="S5" value="1.0" />
-      <entry key="S10" value="1.0" />
-      <entry key="S30" value="1.0000000011119088" />
-      <entry key="S60" value="1.0000797755283013" />
-      <entry key="M2" value="1.0236476892410955" />
-      <entry key="M5" value="1.7759555377570138" />
-      <entry key="M10" value="3.5762137777109944" />
-      <entry key="M15" value="4.879386845878291" />
-      <entry key="M30" value="6.882618583439559" />
-      <entry key="H1" value="8.267150260572539" />
-      <entry key="H2" value="9.084620776522652" />
-      <entry key="H4" value="9.529314293372732" />
-      <entry key="D1" value="9.91967888688481" />
-      <entry key="W1" value="9.98847875093913" />
+      <entry key="MS100" value="1.0000000000000002" />
+      <entry key="MS500" value="1.0006707208849008" />
+      <entry key="S2" value="1.163798890122689" />
+      <entry key="S5" value="1.577753535644813" />
+      <entry key="S10" value="2.005549589725454" />
+      <entry key="S30" value="2.7350800283355254" />
+      <entry key="S60" value="3.3516689606789747" />
+      <entry key="M2" value="4.070498068734539" />
+      <entry key="M5" value="5.529998335730419" />
+      <entry key="M10" value="7.4807737971103005" />
+      <entry key="M15" value="9.357428208785986" />
+      <entry key="M30" value="13.996573119473393" />
+      <entry key="H1" value="20.254495743560067" />
+      <entry key="H2" value="28.82181924928154" />
+      <entry key="H4" value="38.46669671673556" />
+      <entry key="D1" value="53.635079537927865" />
+      <entry key="W1" value="57.34092425399845" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.7383425239222053E-4" />
-      <entry key="MS500" value="0.17702192977681797" />
-      <entry key="S2" value="0.6486445414421448" />
-      <entry key="S5" value="0.8410129963301874" />
-      <entry key="S10" value="0.9170676072843198" />
-      <entry key="S30" value="0.9715543895797139" />
-      <entry key="S60" value="0.9857507258526008" />
-      <entry key="M2" value="1.0158761512041714" />
-      <entry key="M5" value="1.7648690523554298" />
-      <entry key="M10" value="3.5610044660933275" />
-      <entry key="M15" value="4.864630316438692" />
-      <entry key="M30" value="6.87174489802219" />
-      <entry key="H1" value="8.260524344496881" />
-      <entry key="H2" value="9.080960268464686" />
-      <entry key="H4" value="9.527390034098735" />
-      <entry key="D1" value="9.919344473464271" />
-      <entry key="W1" value="9.988430633249626" />
+      <entry key="MS100" value="2.8864194171945393E-10" />
+      <entry key="MS500" value="0.01237778386154186" />
+      <entry key="S2" value="0.3971021193336335" />
+      <entry key="S5" value="1.0129168753759314" />
+      <entry key="S10" value="1.6786642537570637" />
+      <entry key="S30" value="3.6875481407110984" />
+      <entry key="S60" value="6.093859862724307" />
+      <entry key="M2" value="9.79642987506994" />
+      <entry key="M5" value="18.043941750718936" />
+      <entry key="M10" value="26.683375542045894" />
+      <entry key="M15" value="32.96982903408718" />
+      <entry key="M30" value="46.715541316678795" />
+      <entry key="H1" value="65.58622144673677" />
+      <entry key="H2" value="90.7843711667825" />
+      <entry key="H4" value="116.85846273105432" />
+      <entry key="D1" value="154.62234734593181" />
+      <entry key="W1" value="163.44414431459472" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo">{
@@ -129,43 +144,44 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.cidr.known.project.marker": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.readMode.enableVisualFormatting": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "Uproject.Static.executor": "Run",
-    "cidr.known.project.marker": "true",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "copilot.chat.legacySessionMetadata.migrated": "true",
-    "git-widget-placeholder": "main",
-    "ignore.virus.scanning.warn.message": "true",
-    "junie.onboarding.icon.badge.shown": "true",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "SolutionBuilderGeneralOptionsPage",
-    "to.speed.mode.migration.done": "true",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;Uproject.Static.executor&quot;: &quot;Debug&quot;,
+    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;copilot.chat.legacySessionMetadata.migrated&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;SolutionBuilderGeneralOptionsPage&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager">
     <configuration name="Static" type="Uproject" factoryName="rider.uproject">
       <configuration_1 setup="1">
         <option name="CONFIGURATION" value="DebugGame Editor" />
         <option name="PLATFORM" value="Win64" />
         <option name="CURRENT_LAUNCH_PROFILE" value="Local" />
-        <option name="EXECUTABLE_PATH" value="$PROJECT_DIR$/../../UE/UE_5.4/Engine/Binaries/Win64/UnrealEditor-Win64-DebugGame.exe" />
-        <option name="MANDATORY_PROGRAM_PARAMETERS" value=" &quot;D:\TIMATO\Static\Static.uproject&quot;" />
+        <option name="EXECUTABLE_PATH" value="$PROJECT_DIR$/../../EPIC_LIBRARY/UE_5.4/Engine/Binaries/Win64/UnrealEditor-Win64-DebugGame.exe" />
+        <option name="MANDATORY_PROGRAM_PARAMETERS" value=" &quot;D:\FrequenceBoreale\Static\Static.uproject&quot;" />
         <option name="CUSTOM_PROGRAM_PARAMETERS" value="" />
-        <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../../UE/UE_5.4" />
+        <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../../EPIC_LIBRARY/UE_5.4" />
         <option name="PASS_PARENT_ENVS" value="1" />
         <option name="USE_EXTERNAL_CONSOLE" value="1" />
         <option name="TERMINAL_INTERACTION_BEHAVIOR" value="FORCE_CONSOLE" />
@@ -178,7 +194,7 @@
         <option name="EXECUTABLE_PATH" value="$PROJECT_DIR$/Binaries/Win64/Static-Win64-DebugGame.exe" />
         <option name="MANDATORY_PROGRAM_PARAMETERS" value="" />
         <option name="CUSTOM_PROGRAM_PARAMETERS" value="" />
-        <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../../UE/UE_5.4" />
+        <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../../EPIC_LIBRARY/UE_5.4" />
         <option name="PASS_PARENT_ENVS" value="1" />
         <option name="USE_EXTERNAL_CONSOLE" value="1" />
         <option name="TERMINAL_INTERACTION_BEHAVIOR" value="FORCE_CONSOLE" />
@@ -188,10 +204,10 @@
         <option name="CONFIGURATION" value="Development Editor" />
         <option name="PLATFORM" value="Win64" />
         <option name="CURRENT_LAUNCH_PROFILE" value="Local" />
-        <option name="EXECUTABLE_PATH" value="$PROJECT_DIR$/../../UE/UE_5.4/Engine/Binaries/Win64/UnrealEditor.exe" />
-        <option name="MANDATORY_PROGRAM_PARAMETERS" value=" &quot;D:\TIMATO\Static\Static.uproject&quot;" />
+        <option name="EXECUTABLE_PATH" value="$PROJECT_DIR$/../../EPIC_LIBRARY/UE_5.4/Engine/Binaries/Win64/UnrealEditor.exe" />
+        <option name="MANDATORY_PROGRAM_PARAMETERS" value=" &quot;D:\FrequenceBoreale\Static\Static.uproject&quot;" />
         <option name="CUSTOM_PROGRAM_PARAMETERS" value="" />
-        <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../../UE/UE_5.4" />
+        <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../../EPIC_LIBRARY/UE_5.4" />
         <option name="PASS_PARENT_ENVS" value="1" />
         <option name="USE_EXTERNAL_CONSOLE" value="1" />
         <option name="TERMINAL_INTERACTION_BEHAVIOR" value="FORCE_CONSOLE" />
@@ -204,7 +220,7 @@
         <option name="EXECUTABLE_PATH" value="$PROJECT_DIR$/Binaries/Win64/Static.exe" />
         <option name="MANDATORY_PROGRAM_PARAMETERS" value="" />
         <option name="CUSTOM_PROGRAM_PARAMETERS" value="" />
-        <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../../UE/UE_5.4" />
+        <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../../EPIC_LIBRARY/UE_5.4" />
         <option name="PASS_PARENT_ENVS" value="1" />
         <option name="USE_EXTERNAL_CONSOLE" value="1" />
         <option name="TERMINAL_INTERACTION_BEHAVIOR" value="FORCE_CONSOLE" />
@@ -217,7 +233,7 @@
         <option name="EXECUTABLE_PATH" value="$PROJECT_DIR$/Binaries/Win64/Static-Win64-Shipping.exe" />
         <option name="MANDATORY_PROGRAM_PARAMETERS" value="" />
         <option name="CUSTOM_PROGRAM_PARAMETERS" value="" />
-        <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../../UE/UE_5.4" />
+        <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../../EPIC_LIBRARY/UE_5.4" />
         <option name="PASS_PARENT_ENVS" value="1" />
         <option name="USE_EXTERNAL_CONSOLE" value="1" />
         <option name="TERMINAL_INTERACTION_BEHAVIOR" value="FORCE_CONSOLE" />
@@ -240,6 +256,9 @@
       <updated>1782272125789</updated>
       <workItem from="1782272126425" duration="2454000" />
       <workItem from="1782336989912" duration="2671000" />
+      <workItem from="1782396401633" duration="16800000" />
+      <workItem from="1782423018570" duration="2069000" />
+      <workItem from="1782483332696" duration="5219000" />
     </task>
     <servers />
   </component>

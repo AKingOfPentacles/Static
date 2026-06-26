@@ -5,6 +5,7 @@
 #include "Systems/GamePhaseManager.h"
 #include "Characters/LivingCharacter.h"
 #include "Components/CardiacRhythmComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
@@ -22,6 +23,8 @@
 
 ADeadCharacter::ADeadCharacter()
 {
+    // ALS requires Tick to be enabled — it updates locomotion state,
+    // rotation, camera, and animation every frame via Tick.
     PrimaryActorTick.bCanEverTick = true;
 
     // ALS camera — same setup as ALivingCharacter.
@@ -52,6 +55,58 @@ void ADeadCharacter::BeginPlay()
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Tick — drives floating movement on BOTH server and client
+// ─────────────────────────────────────────────────────────────────────────────
+
+void ADeadCharacter::Tick(float DeltaTime)
+{
+    Super::Tick(DeltaTime);
+
+    if (!bIsFloating) return;
+
+    const FVector CurrentLoc = GetActorLocation();
+    const FVector Target     = (FloatWaypointIndex == 0) ? FloatWaypoint1 : FloatWaypoint2;
+    const FVector ToTarget   = Target - CurrentLoc;
+    const float   Dist2D     = FVector(ToTarget.X, ToTarget.Y, 0.0f).Size();
+
+    if (Dist2D < 15.0f)
+    {
+        if (FloatWaypointIndex == 0)
+        {
+            // Entry reached — advance to exit.
+            FloatWaypointIndex = 1;
+        }
+        else
+        {
+            // Exit reached — stop immediately from Tick.
+            // This eliminates the gap between arrival and the timer firing
+            // where ALS would apply its own rotation for a frame or two.
+            // The timer in DoorActor becomes a safety net only.
+            StopFloating();
+
+            // Restore input — DoorActor can't do this from its timer
+            // if StopFloating fires first, so we handle it here too.
+            if (APlayerController* PC = Cast<APlayerController>(GetController()))
+            {
+                PC->ResetIgnoreMoveInput();
+                PC->ResetIgnoreLookInput();
+            }
+        }
+        return;
+    }
+
+    // Move toward current waypoint.
+    const FVector MoveDir = FVector(ToTarget.X, ToTarget.Y, 0.0f).GetSafeNormal();
+    AddMovementInput(MoveDir, 1.0f);
+
+    // Smoothly rotate to face direction of travel.
+    const FRotator TargetRot = MoveDir.Rotation();
+    const FRotator NewRot    = FMath::RInterpTo(GetActorRotation(), TargetRot,
+        DeltaTime, 8.0f);
+    SetActorRotation(NewRot);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // GetLifetimeReplicatedProps
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -61,6 +116,12 @@ void ADeadCharacter::GetLifetimeReplicatedProps(
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(ADeadCharacter, bIsManifested);
     DOREPLIFETIME(ADeadCharacter, UnlockedAbilityFlags);
+    // Float state replicated so clients run identical Tick movement.
+    DOREPLIFETIME(ADeadCharacter, bIsFloating);
+    DOREPLIFETIME(ADeadCharacter, FloatWaypoint1);
+    DOREPLIFETIME(ADeadCharacter, FloatWaypoint2);
+    DOREPLIFETIME(ADeadCharacter, FloatExitRotation);
+    DOREPLIFETIME(ADeadCharacter, FloatForwardSpeed);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -600,4 +661,103 @@ void ADeadCharacter::HandleSpecterDepleted()
 ADeadPlayerState* ADeadCharacter::GetDeadPlayerState() const
 {
     return GetPlayerState<ADeadPlayerState>();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// StartFloating
+//   Sets replicated waypoints and float state so BOTH server and client
+//   run the same Tick movement logic. No timer injection needed.
+// ─────────────────────────────────────────────────────────────────────────────
+
+void ADeadCharacter::StartFloating(FVector EntryPosition, FVector ExitPosition,
+    FRotator ExitRotation, float Speed)
+{
+    if (!HasAuthority()) return;
+    if (bIsFloating) return;
+
+    FloatWaypoint1     = EntryPosition;
+    FloatWaypoint2     = ExitPosition;
+    FloatExitRotation  = ExitRotation;
+    FloatForwardSpeed  = Speed;
+    FloatWaypointIndex = 0;
+    bIsFloating        = true;
+
+    SetLocomotionMode(AlsLocomotionModeTags::Floating);
+
+    UE_LOG(LogTemp, Log,
+        TEXT("[Dead] StartFloating: Entry=%s Exit=%s ExitRot=%s Speed=%.0f"),
+        *EntryPosition.ToString(), *ExitPosition.ToString(),
+        *ExitRotation.ToString(), Speed);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// StopFloating
+// ─────────────────────────────────────────────────────────────────────────────
+
+void ADeadCharacter::StopFloating()
+{
+    if (!HasAuthority()) return;
+    if (!bIsFloating) return;
+
+    bIsFloating        = false;
+    FloatForwardSpeed  = 0.0f;
+    FloatWaypointIndex = 0;
+
+    // Snap to exact exit point location and rotation.
+    // FloatWaypoint2 is the exit world position set by ADoorActor.
+    // FloatExitRotation is the exit point's world rotation set by ADoorActor.
+    if (!FloatWaypoint2.IsZero())
+    {
+        SetActorLocationAndRotation(FloatWaypoint2, FloatExitRotation,
+            false, nullptr, ETeleportType::TeleportPhysics);
+    }
+
+    FloatWaypoint1     = FVector::ZeroVector;
+    FloatWaypoint2     = FVector::ZeroVector;
+    FloatExitRotation  = FRotator::ZeroRotator;
+
+    GetWorldTimerManager().ClearTimer(FloatTimerHandle);
+
+    // Zero velocity so ALS has nothing to rotate toward.
+    if (UCharacterMovementComponent* Movement = GetCharacterMovement())
+    {
+        Movement->Velocity = FVector::ZeroVector;
+        Movement->StopMovementImmediately();
+    }
+
+    SetLocomotionMode(AlsLocomotionModeTags::Grounded);
+
+    UE_LOG(LogTemp, Log, TEXT("[Dead] StopFloating — placed at exit point."));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// OnRep_FloatState — fires on clients when bIsFloating changes
+// ─────────────────────────────────────────────────────────────────────────────
+
+void ADeadCharacter::OnRep_FloatState()
+{
+    if (bIsFloating)
+    {
+        FloatWaypointIndex = 0;
+        SetLocomotionMode(AlsLocomotionModeTags::Floating);
+    }
+    else
+    {
+        FloatWaypointIndex = 0;
+
+        // Snap to exact exit point — same as server.
+        if (!FloatWaypoint2.IsZero())
+        {
+            SetActorLocationAndRotation(FloatWaypoint2, FloatExitRotation,
+                false, nullptr, ETeleportType::TeleportPhysics);
+        }
+
+        if (UCharacterMovementComponent* Movement = GetCharacterMovement())
+        {
+            Movement->Velocity = FVector::ZeroVector;
+            Movement->StopMovementImmediately();
+        }
+
+        SetLocomotionMode(AlsLocomotionModeTags::Grounded);
+    }
 }

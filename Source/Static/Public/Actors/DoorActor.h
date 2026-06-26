@@ -7,30 +7,41 @@
 
 class UStaticMeshComponent;
 class UBoxComponent;
+class UArrowComponent;
+class USceneComponent;
 class ADeadCharacter;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Delegates — Blueprint-assignable events for VFX/SFX/animation hooks
+// ─────────────────────────────────────────────────────────────────────────────
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPassthroughStarted, ADeadCharacter*, Dead);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPassthroughEnded,   ADeadCharacter*, Dead);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ADoorActor
 //
-//   A replicated door that behaves differently for Living and Dead:
+//   Living → Interact() opens or closes the door normally.
 //
-//   LIVING → Interact() opens or closes the door normally.
-//
-//   DEAD   → Interact() calls PassThrough() instead.
-//            The door stays closed. The Dead's capsule collision is disabled
-//            for PassThroughDuration seconds, the character is pushed forward
-//            through the door with an impulse, then collision re-enables.
-//            This costs PassThroughEnergyCost specter energy.
-//
-//   The Living see the door stay closed — from their perspective, the Dead
-//   simply appeared on the other side. The Dead feel a brief 0.5s transit.
+//   Dead   → Interact() triggers a controlled pass-through:
+//     1. Energy deducted.
+//     2. Door mesh collision disabled.
+//     3. OnPassthroughStarted fires (Blueprint: shimmer VFX, sound, etc.)
+//     4. Player input blocked.
+//     5. Dead teleported to EntryPoint (designer-placed scene component).
+//     6. Dead moves automatically to ExitPoint at PassThroughSpeed.
+//     7. Door collision restored.
+//     8. Input re-enabled.
+//     9. OnPassthroughEnded fires (Blueprint: clean-up VFX, etc.)
 //
 //   EDITOR SETUP:
 //   1. Create BP_Door from this class.
 //   2. Assign a door panel mesh to DoorMesh.
-//   3. Set OpenRotation (e.g. Yaw = 90) for swing direction.
-//   4. The door frame should be a separate static mesh actor — not part of this BP.
-//   5. Set PassThroughEnergyCost to match your energy economy (default 12).
+//   3. In the viewport, position the two orange arrows:
+//      - EntryPoint : place it in front of the door on one side, at floor level
+//      - ExitPoint  : place it on the other side, at floor level
+//      The Dead will snap to EntryPoint then walk to ExitPoint.
+//      Move them freely — they are child SceneComponents visible in the editor.
+//   4. Set PassThroughSpeed and PassThroughEnergyCost in Class Defaults.
 // ─────────────────────────────────────────────────────────────────────────────
 UCLASS()
 class STATIC_API ADoorActor : public AActor, public IInteractable
@@ -62,11 +73,6 @@ public:
 
     // ── Dead pass-through ─────────────────────────────────────────────────────
 
-    /**
-     * Called when a Dead character interacts with the door.
-     * Checks energy cost, disables capsule, pushes through, re-enables.
-     * SERVER ONLY.
-     */
     UFUNCTION(BlueprintCallable, Category = "Door|PassThrough")
     void PassThrough(ADeadCharacter* Dead);
 
@@ -82,36 +88,64 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door", Replicated)
     bool bIsLocked = false;
 
-    /** Energy cost for the Dead to pass through this door. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door|PassThrough",
         meta = (ClampMin = "0.0"))
     float PassThroughEnergyCost = 12.0f;
 
-    /**
-     * How long (seconds) before the Dead teleports to the other side.
-     * Gives the feel of slipping through rather than instant warp.
-     */
+    /** Speed the Dead moves from EntryPoint to ExitPoint (cm/s). */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door|PassThrough",
-        meta = (ClampMin = "0.1"))
-    float PassThroughDuration = 0.5f;
+        meta = (ClampMin = "50.0"))
+    float PassThroughSpeed = 200.0f;
 
-    /**
-     * How far past the door center the Dead lands after passing through (cm).
-     * Should be at least half the door thickness + capsule radius (~50cm).
-     */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door|PassThrough",
-        meta = (ClampMin = "30.0"))
-    float PassThroughDepth = 80.0f;
+    // ── Blueprint events ──────────────────────────────────────────────────────
+
+    /** Fired when pass-through begins — bind for shimmer VFX, sound, etc. */
+    UPROPERTY(BlueprintAssignable, Category = "Door|PassThrough")
+    FOnPassthroughStarted OnPassthroughStarted;
+
+    /** Fired when pass-through ends — bind for clean-up VFX, etc. */
+    UPROPERTY(BlueprintAssignable, Category = "Door|PassThrough")
+    FOnPassthroughEnded OnPassthroughEnded;
 
 protected:
+    // ── Components ────────────────────────────────────────────────────────────
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Door|Components")
     UStaticMeshComponent* DoorMesh;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Door|Components")
     UBoxComponent* InteractionVolume;
 
+    /**
+     * Entry point for Dead pass-through.
+     * Position this in the editor on the side the Dead approaches from.
+     * The Dead will snap here before moving to ExitPoint.
+     * Shown as an arrow in the viewport — drag it freely.
+     */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Door|PassThrough")
+    USceneComponent* EntryPoint;
+
+    /**
+     * Exit point for Dead pass-through.
+     * Position this on the other side of the door.
+     * The Dead will move here automatically after snapping to EntryPoint.
+     * Shown as an arrow in the viewport — drag it freely.
+     */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Door|PassThrough")
+    USceneComponent* ExitPoint;
+
+    /**
+     * Visual arrows shown in editor viewport for Entry and Exit points.
+     * These are children of EntryPoint and ExitPoint for clarity.
+     */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Door|PassThrough")
+    UArrowComponent* EntryArrow;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Door|PassThrough")
+    UArrowComponent* ExitArrow;
+
 private:
-    // ── Door animation state ──────────────────────────────────────────────────
+    // ── Door animation ────────────────────────────────────────────────────────
 
     UPROPERTY(ReplicatedUsing = OnRep_IsOpen)
     bool bIsOpen = false;
@@ -123,15 +157,11 @@ private:
     FRotator TargetMeshRotation  = FRotator::ZeroRotator;
     bool bAnimating = false;
 
-    // ── Pass-through state ────────────────────────────────────────────────────
-
-    /** Multicast to all clients to play the ghostly transit VFX. */
-    UFUNCTION(NetMulticast, Unreliable)
-    void Multicast_PlayPassThroughEffect(ADeadCharacter* Dead);
-    void Multicast_PlayPassThroughEffect_Implementation(ADeadCharacter* Dead);
-
-    /** Re-enable the Dead character's capsule after transit completes. */
-    void FinishPassThrough(ADeadCharacter* Dead, FVector ExitLocation);
+    // ── Pass-through helpers ──────────────────────────────────────────────────
 
     FTimerHandle PassThroughTimerHandle;
+
+    UFUNCTION(NetMulticast, Reliable)
+    void Multicast_SetDoorCollision(bool bEnable);
+    void Multicast_SetDoorCollision_Implementation(bool bEnable);
 };

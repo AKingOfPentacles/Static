@@ -4,7 +4,9 @@
 #include "Components/SpecterEnergyComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/BoxComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
+#include "Components/ArrowComponent.h"
+#include "Components/SceneComponent.h"
+#include "GameFramework/PlayerController.h"
 #include "Net/UnrealNetwork.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
@@ -14,17 +16,43 @@ ADoorActor::ADoorActor()
     PrimaryActorTick.bCanEverTick = true;
     bReplicates = true;
 
+    // ── Root ──────────────────────────────────────────────────────────────────
     USceneComponent* Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
     SetRootComponent(Root);
 
+    // ── Door mesh ─────────────────────────────────────────────────────────────
     DoorMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DoorMesh"));
     DoorMesh->SetupAttachment(Root);
     DoorMesh->SetCollisionProfileName(TEXT("BlockAll"));
 
+    // ── Interaction volume ────────────────────────────────────────────────────
     InteractionVolume = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractionVolume"));
     InteractionVolume->SetupAttachment(Root);
     InteractionVolume->SetBoxExtent(FVector(60.f, 100.f, 100.f));
     InteractionVolume->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
+
+    // ── Entry point ───────────────────────────────────────────────────────────
+    // Default position: 80cm in front of the door on one side, at floor level.
+    // Designer repositions this in the viewport to match the actual door geometry.
+    EntryPoint = CreateDefaultSubobject<USceneComponent>(TEXT("EntryPoint"));
+    EntryPoint->SetupAttachment(Root);
+    EntryPoint->SetRelativeLocation(FVector(80.0f, 0.0f, 0.0f));
+
+    EntryArrow = CreateDefaultSubobject<UArrowComponent>(TEXT("EntryArrow"));
+    EntryArrow->SetupAttachment(EntryPoint);
+    EntryArrow->ArrowColor = FColor::Green;
+    EntryArrow->bHiddenInGame = true; // Visible in editor only.
+
+    // ── Exit point ────────────────────────────────────────────────────────────
+    // Default position: 80cm on the other side of the door.
+    ExitPoint = CreateDefaultSubobject<USceneComponent>(TEXT("ExitPoint"));
+    ExitPoint->SetupAttachment(Root);
+    ExitPoint->SetRelativeLocation(FVector(-80.0f, 0.0f, 0.0f));
+
+    ExitArrow = CreateDefaultSubobject<UArrowComponent>(TEXT("ExitArrow"));
+    ExitArrow->SetupAttachment(ExitPoint);
+    ExitArrow->ArrowColor = FColor::Red;
+    ExitArrow->bHiddenInGame = true;
 }
 
 void ADoorActor::BeginPlay()
@@ -43,7 +71,7 @@ void ADoorActor::GetLifetimeReplicatedProps(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Tick — smooth door animation on all clients
+// Tick — smooth door swing
 // ─────────────────────────────────────────────────────────────────────────────
 
 void ADoorActor::Tick(float DeltaTime)
@@ -65,40 +93,33 @@ void ADoorActor::Tick(float DeltaTime)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // IInteractable
-//   Routes to different behaviour based on who is interacting.
 // ─────────────────────────────────────────────────────────────────────────────
 
 bool ADoorActor::CanInteract_Implementation(AActor* Interactor) const
 {
-    // Dead can always attempt a door — PassThrough handles the energy check.
-    if (Cast<ADeadCharacter>(Interactor)) return true;
-
-    // Living are blocked by locked doors.
+    if (ADeadCharacter* Dead = Cast<ADeadCharacter>(Interactor))
+        return !Dead->IsFloating();
     return !bIsLocked;
 }
 
 FText ADoorActor::GetInteractPrompt_Implementation() const
 {
-    if (Cast<ADeadCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn()))
-    {
-        return FText::FromString("Pass through");
-    }
     if (bIsLocked) return FText::FromString("Locked");
-    return bIsOpen ? FText::FromString("Close door") : FText::FromString("Open door");
+    return bIsOpen
+        ? FText::FromString("Close door")
+        : FText::FromString("Open door");
 }
 
 bool ADoorActor::Interact_Implementation(AActor* Interactor, const FHitResult& HitResult)
 {
     if (!HasAuthority()) return false;
 
-    // Dead character → pass through instead of opening.
     if (ADeadCharacter* Dead = Cast<ADeadCharacter>(Interactor))
     {
         PassThrough(Dead);
         return true;
     }
 
-    // Living character → normal open/close toggle.
     if (Cast<ALivingCharacter>(Interactor))
     {
         SetOpen(!bIsOpen);
@@ -109,7 +130,7 @@ bool ADoorActor::Interact_Implementation(AActor* Interactor, const FHitResult& H
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SetOpen / OnRep_IsOpen
+// SetOpen
 // ─────────────────────────────────────────────────────────────────────────────
 
 void ADoorActor::SetOpen(bool bOpen)
@@ -126,7 +147,13 @@ void ADoorActor::OnRep_IsOpen()
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PassThrough — the core of the new Dead door interaction
+// PassThrough
+//
+//   Uses designer-placed EntryPoint and ExitPoint scene components.
+//   No geometry math — the designer positions the arrows in the editor.
+//
+//   Entry and Exit world positions are computed from the scene component
+//   transforms at runtime, so they move correctly if the door is rotated.
 // ─────────────────────────────────────────────────────────────────────────────
 
 void ADoorActor::PassThrough(ADeadCharacter* Dead)
@@ -137,79 +164,106 @@ void ADoorActor::PassThrough(ADeadCharacter* Dead)
     USpecterEnergyComponent* Energy = Dead->GetSpecterEnergyComponent();
     if (!Energy || !Energy->TrySpendEnergy(PassThroughEnergyCost))
     {
-        UE_LOG(LogTemp, Log,
-            TEXT("[Door] Dead '%s' can't afford to pass through. Cost: %.0f"),
-            *Dead->GetName(), PassThroughEnergyCost);
+        UE_LOG(LogTemp, Log, TEXT("[Door] Not enough energy. Cost: %.0f"),
+            PassThroughEnergyCost);
         return;
     }
 
-    // ── Determine which side the Dead is on ───────────────────────────────────
-    // The door's forward vector points through the door plane.
-    // If the Dead is in front (positive dot) we teleport them behind, and vice versa.
-    // We offset by PassThroughDepth cm so they land clear of the door mesh.
-    const FVector DoorForward  = GetActorForwardVector();
-    const FVector ToDead       = Dead->GetActorLocation() - GetActorLocation();
-    const float   Side         = FVector::DotProduct(DoorForward, ToDead);
-    const FVector ExitOffset   = (Side >= 0.0f ? -DoorForward : DoorForward)
-                                 * PassThroughDepth;
+    // ── Get world-space entry and exit positions ───────────────────────────────
+    // The designer placed these relative to the door root in the editor.
+    // GetComponentLocation() gives us the world position automatically.
+    //
+    // We choose which point is Entry vs Exit based on which is closer
+    // to the Dead's current position — so the interaction works correctly
+    // regardless of which side the Dead approaches from.
+    const FVector EntryWorld = EntryPoint->GetComponentLocation();
+    const FVector ExitWorld  = ExitPoint->GetComponentLocation();
+    const FVector DeadLoc    = Dead->GetActorLocation();
 
-    const FVector ExitLocation = GetActorLocation()
-                                 + ExitOffset
-                                 + FVector(0.0f, 0.0f, 90.0f); // Keep at character height
+    const float DistToEntry = FVector::Dist2D(DeadLoc, EntryWorld);
+    const float DistToExit  = FVector::Dist2D(DeadLoc, ExitWorld);
 
-    // ── Schedule the teleport after PassThroughDuration ──────────────────────
-    // Brief delay gives the feel of slipping through rather than instant warp.
-    // During the delay the Dead walks into the door normally — the door is
-    // the only thing blocking them, so they visually press against it.
-    Multicast_PlayPassThroughEffect(Dead);
+    // Closest point = entry (Dead approaches from this side).
+    // Furthest point = exit (Dead emerges here).
+    const FVector SnapPosition   = (DistToEntry <= DistToExit) ? EntryWorld : ExitWorld;
+    const FVector MoveToPosition = (DistToEntry <= DistToExit) ? ExitWorld  : EntryWorld;
 
-    TWeakObjectPtr<ADoorActor>    WeakSelf(this);
+    UE_LOG(LogTemp, Log,
+        TEXT("[Door] PassThrough: Entry=%s Exit=%s"),
+        *SnapPosition.ToString(), *MoveToPosition.ToString());
+
+    // ── Disable door collision ────────────────────────────────────────────────
+    Multicast_SetDoorCollision(false);
+
+    // ── Fire Blueprint event ──────────────────────────────────────────────────
+    OnPassthroughStarted.Broadcast(Dead);
+
+    // ── Block player input ────────────────────────────────────────────────────
+    if (APlayerController* PC = Cast<APlayerController>(Dead->GetController()))
+    {
+        PC->SetIgnoreMoveInput(true);
+        PC->SetIgnoreLookInput(true);
+    }
+
+    // Exit rotation comes from whichever SceneComponent is the exit.
+    const FRotator ExitRotation = (DistToEntry <= DistToExit)
+        ? ExitPoint->GetComponentRotation()
+        : EntryPoint->GetComponentRotation();
+
+    // ── Start smooth float: current pos → entry → exit ───────────────────────
+    Dead->StartFloating(SnapPosition, MoveToPosition, ExitRotation, PassThroughSpeed);
+
+    // ── Timer: restore after full transit ────────────────────────────────────
+    // Cover: Dead's current pos → entry + entry → exit, with buffer.
+    const float DistDeadToEntry = FVector::Dist(Dead->GetActorLocation(), SnapPosition);
+    const float DistEntry2Exit  = FVector::Dist(SnapPosition, MoveToPosition);
+    const float Duration = ((DistDeadToEntry + DistEntry2Exit) / FMath::Max(PassThroughSpeed, 1.0f)) + 0.3f;
+
+    TWeakObjectPtr<ADoorActor>     WeakSelf(this);
     TWeakObjectPtr<ADeadCharacter> WeakDead(Dead);
 
     GetWorldTimerManager().SetTimer(PassThroughTimerHandle,
-        FTimerDelegate::CreateLambda([WeakSelf, WeakDead, ExitLocation]()
+        FTimerDelegate::CreateLambda([WeakSelf, WeakDead]()
         {
-            if (WeakSelf.IsValid() && WeakDead.IsValid())
+            if (!WeakSelf.IsValid()) return;
+
+            // Always restore door collision.
+            WeakSelf->Multicast_SetDoorCollision(true);
+
+            if (WeakDead.IsValid())
             {
-                WeakSelf->FinishPassThrough(WeakDead.Get(), ExitLocation);
+                // StopFloating may have already been called by Tick on arrival.
+                // IsFloating() guards against double calls.
+                if (WeakDead->IsFloating())
+                {
+                    WeakDead->StopFloating();
+                }
+
+                // Restore input in case Tick didn't fire for some reason.
+                if (APlayerController* PC = Cast<APlayerController>(
+                    WeakDead->GetController()))
+                {
+                    PC->ResetIgnoreMoveInput();
+                    PC->ResetIgnoreLookInput();
+                }
+
+                // Fire Blueprint end event.
+                WeakSelf->OnPassthroughEnded.Broadcast(WeakDead.Get());
             }
+
+            UE_LOG(LogTemp, Log, TEXT("[Door] Pass-through timer complete."));
         }),
-        PassThroughDuration, false);
-
-    UE_LOG(LogTemp, Log, TEXT("[Door] '%s' passing through '%s'. Exit: %s"),
-        *Dead->GetName(), *GetName(), *ExitLocation.ToString());
-    UE_LOG(LogTemp, Log, TEXT("[Door] '%s' passing through door '%s'. Cost: %.0f energy."),
-    *Dead->GetName(), *GetName(), PassThroughEnergyCost);
-}
-
-
-// ─────────────────────────────────────────────────────────────────────────────
-// FinishPassThrough — restore collision after transit
-// ─────────────────────────────────────────────────────────────────────────────
-
-void ADoorActor::FinishPassThrough(ADeadCharacter* Dead, FVector ExitLocation)
-{
-    if (!Dead) return;
-
-    // Teleport the Dead to the other side of the door.
-    // ETeleportType::TeleportPhysics ensures the movement component
-    // doesn't fight the position change.
-    Dead->SetActorLocation(ExitLocation, false, nullptr,
-        ETeleportType::TeleportPhysics);
-
-    UE_LOG(LogTemp, Log, TEXT("[Door] '%s' teleported to other side: %s"),
-        *Dead->GetName(), *ExitLocation.ToString());
+        Duration, false);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Multicast_PlayPassThroughEffect — cosmetic only, fires on all clients
+// Multicast_SetDoorCollision
 // ─────────────────────────────────────────────────────────────────────────────
 
-void ADoorActor::Multicast_PlayPassThroughEffect_Implementation(ADeadCharacter* Dead)
+void ADoorActor::Multicast_SetDoorCollision_Implementation(bool bEnable)
 {
-    // Blueprint: override this to add:
-    // • A brief door shimmer/ripple material effect
-    // • A low whoosh sound at the door location
-    // • Optional subtle camera blur on the transiting Dead client
-    UE_LOG(LogTemp, Log, TEXT("[Door] PassThrough VFX — override in Blueprint."));
+    if (!DoorMesh) return;
+    DoorMesh->SetCollisionEnabled(
+        bEnable ? ECollisionEnabled::QueryAndPhysics
+                : ECollisionEnabled::NoCollision);
 }

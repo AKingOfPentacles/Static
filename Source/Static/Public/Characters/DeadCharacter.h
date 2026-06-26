@@ -20,30 +20,15 @@ UENUM(BlueprintType)
 enum class EDeadAbility : uint8
 {
     None            UMETA(DisplayName = "None"),
-    Whisper         UMETA(DisplayName = "Whisper"),       // Bit 0
-    Shiver          UMETA(DisplayName = "Shiver"),        // Bit 1
-    Spook           UMETA(DisplayName = "Spook"),         // Bit 2
-    Manifestation   UMETA(DisplayName = "Manifestation"), // Bit 3 (Phase 2+)
-    FullManifest    UMETA(DisplayName = "Full Manifest")  // Bit 4 (Phase 3 only)
+    Whisper         UMETA(DisplayName = "Whisper"),
+    Shiver          UMETA(DisplayName = "Shiver"),
+    Spook           UMETA(DisplayName = "Spook"),
+    Manifestation   UMETA(DisplayName = "Manifestation"),
+    FullManifest    UMETA(DisplayName = "Full Manifest")
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ADeadCharacter
-//
-//   The playable pawn for the Dead team.
-//   Inherits standard ALS movement from AStaticCharacterBase — walks exactly
-//   like the Living. The ghostly feel comes from:
-//   • Being invisible by default (mesh hidden, only shown when manifesting)
-//   • Passing through doors via ADoorActor::PassThrough()
-//   • Fear abilities (Whisper, Shiver, Spook, Manifestation)
-//   • No inventory — abilities are intrinsic, gated by phase and energy
-//
-//   EDITOR SETUP:
-//   1. Create BP_DeadCharacter from this class.
-//   2. Assign all UInputAction properties in Blueprint defaults.
-//   3. Add Dead input actions to your InputMappingContext asset.
-//   4. Set mesh Hidden in Game = true by default.
-//   5. Set BurialGroundsActor to BP_BurialGrounds in your level.
 // ─────────────────────────────────────────────────────────────────────────────
 UCLASS()
 class STATIC_API ADeadCharacter : public AStaticCharacterBase
@@ -134,6 +119,7 @@ public:
     ADeadCharacter();
 
     virtual void BeginPlay() override;
+    virtual void Tick(float DeltaTime) override;
     virtual void GetLifetimeReplicatedProps(
         TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -151,6 +137,25 @@ protected:
 public:
     UFUNCTION(BlueprintPure, Category = "Dead")
     USpecterEnergyComponent* GetSpecterEnergyComponent() const { return SpecterEnergyComponent; }
+
+    // ── Floating locomotion mode (door pass-through) ──────────────────────────
+public:
+    /**
+     * Enter Floating mode — called by ADoorActor during pass-through.
+     * Dead glides smoothly to EntryPosition first, then to ExitPosition.
+     * Movement driven by Tick on both server and client — no timer injection.
+     * ADoorActor's completion timer calls StopFloating() and restores input.
+     */
+    UFUNCTION(BlueprintCallable, Category = "Dead|Floating")
+    void StartFloating(FVector EntryPosition, FVector ExitPosition,
+        FRotator ExitRotation, float Speed = 200.0f);
+
+    /** Exit Floating mode — restores normal ALS locomotion. */
+    UFUNCTION(BlueprintCallable, Category = "Dead|Floating")
+    void StopFloating();
+
+    UFUNCTION(BlueprintPure, Category = "Dead|Floating")
+    bool IsFloating() const { return bIsFloating; }
 
     // ── Ability interface ─────────────────────────────────────────────────────
 public:
@@ -215,6 +220,33 @@ private:
     UFUNCTION()
     void OnRep_Manifested();
 
+    // ── Floating state ────────────────────────────────────────────────────────
+private:
+    // Replicated so clients run the same Tick movement logic.
+    UPROPERTY(ReplicatedUsing = OnRep_FloatState)
+    bool bIsFloating = false;
+
+    UPROPERTY(Replicated)
+    FVector FloatWaypoint1 = FVector::ZeroVector; // Entry point
+
+    UPROPERTY(Replicated)
+    FVector FloatWaypoint2 = FVector::ZeroVector; // Exit point
+
+    UPROPERTY(Replicated)
+    FRotator FloatExitRotation = FRotator::ZeroRotator; // Exit point rotation
+
+    UPROPERTY(Replicated)
+    float FloatForwardSpeed = 0.0f;
+
+    // Current waypoint index — not replicated, each machine tracks independently.
+    int32 FloatWaypointIndex = 0;
+
+    // Timer handles kept for cleanup only (no movement driven from timers).
+    FTimerHandle FloatTimerHandle;
+
+    UFUNCTION()
+    void OnRep_FloatState();
+
     // ── ALS input handlers ────────────────────────────────────────────────────
 private:
     void Input_OnLookMouse(const FInputActionValue& ActionValue);
@@ -259,7 +291,7 @@ private:
     void Multicast_PlaySpookEffect();
     void Multicast_PlaySpookEffect_Implementation();
 
-    // ── Ability execution (server-only) ──────────────────────────────────────
+    // ── Ability execution ─────────────────────────────────────────────────────
 private:
     void Execute_Whisper();
     void Execute_Shiver();

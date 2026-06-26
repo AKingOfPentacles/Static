@@ -165,9 +165,10 @@ public:
 
 public:
 	const FGameplayTag& GetLocomotionMode() const;
+	UFUNCTION(BlueprintCallable, Category = "ALS|Character", Meta = (AutoCreateRefTerm = "NewLocomotionMode"))
+	void SetLocomotionMode(const FGameplayTag& NewLocomotionMode);
 
 protected:
-	void SetLocomotionMode(const FGameplayTag& NewLocomotionMode);
 
 	virtual void NotifyLocomotionModeChanged(const FGameplayTag& PreviousLocomotionMode);
 

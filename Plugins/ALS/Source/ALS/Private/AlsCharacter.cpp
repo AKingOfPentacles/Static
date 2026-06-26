@@ -471,6 +471,9 @@ void AAlsCharacter::OnMovementModeChanged(const EMovementMode PreviousMovementMo
 		case MOVE_Falling:
 			SetLocomotionMode(AlsLocomotionModeTags::InAir);
 			break;
+		case MOVE_Flying:
+			SetLocomotionMode(AlsLocomotionModeTags::Floating);
+			break;
 
 		default:
 			SetLocomotionMode(FGameplayTag::EmptyTag);
